@@ -2,7 +2,6 @@ package org.movieos.proton;
 
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
-import android.util.Log;
 
 public class CorrectionManager {
     private transient static final String TAG = CorrectionManager.class.getSimpleName();
@@ -39,12 +38,11 @@ public class CorrectionManager {
         }
         matrix.setPolyToPoly(bounds, 0, dest, 0, 4);
 
-        // rotate and scale the image to avoid write corners
+        // rotate and scale the image to avoid write corners. Math
+        // here is wrong, but almost right, I'll deal with this when I care more.
         matrix.postRotate(mRotation, source.getWidth() / 2, source.getHeight() / 2);
         double cos = Math.abs(Math.sin(Math.toRadians(mRotation) * 2));
-        Log.i(TAG, "cos is " + cos);
         double scale = cos * (Math.sqrt(2) - 1) + 1;
-        Log.i(TAG, "scale is " + scale);
         matrix.postScale((float)scale, (float)scale, source.getWidth() / 2, source.getHeight() / 2);
 
         return matrix;
