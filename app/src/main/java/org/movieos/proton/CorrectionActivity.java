@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
@@ -230,17 +231,24 @@ public class CorrectionActivity extends Activity implements SeekBar.OnSeekBarCha
 
     void save() {
         File album = getAlbumStorageDir(getString(R.string.app_name));
-        writeToFile(new File(album, new Date().toString() + ".jpg"));
+        writeToFile(new File(album, filename()));
         Toast.makeText(this, R.string.save_complete, Toast.LENGTH_LONG).show();
+    }
+
+    String filename() {
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+        return format.format(new Date()) + ".jpg";
     }
 
     void share() {
         File folder = new File(getExternalFilesDir("share"), "temp");
         folder.mkdirs();
+        // cleaning up after share is hard, we'll clean up before share
+        // which is 90% as good and way easier to follow.
         for (String filename : folder.list()) {
             new File(folder, filename).delete();
         }
-        File temp = new File(folder, new Date().toString() + ".jpg");
+        File temp = new File(folder, filename());
         writeToFile(temp);
         Log.i(TAG, "tmep is " + temp.toURI());
         Intent intent = new Intent(Intent.ACTION_SEND);
