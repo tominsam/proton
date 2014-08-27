@@ -16,7 +16,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.SeekBar;
 import android.widget.ShareActionProvider;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -34,7 +33,7 @@ import butterknife.InjectView;
 import butterknife.InjectViews;
 import butterknife.OnClick;
 
-public class CorrectionActivity extends Activity implements SeekBar.OnSeekBarChangeListener {
+public class CorrectionActivity extends Activity implements DialControl.OnDialChangeListener {
     private transient static final String TAG = CorrectionActivity.class.getSimpleName();
 
     enum Mode {
@@ -47,8 +46,8 @@ public class CorrectionActivity extends Activity implements SeekBar.OnSeekBarCha
     @InjectView(R.id.grid)
     GridOverlay mGrid;
 
-    @InjectView(R.id.seekbar)
-    SeekBar mSeekBar;
+    @InjectView(R.id.dial)
+    DialControl mDial;
 
     @InjectViews({
             R.id.rotate_button,
@@ -86,7 +85,7 @@ public class CorrectionActivity extends Activity implements SeekBar.OnSeekBarCha
 
         mGrid.setVisibility(View.INVISIBLE);
 
-        mSeekBar.setOnSeekBarChangeListener(this);
+        mDial.setOnChangeListener(this);
     }
 
     @Override
@@ -139,7 +138,7 @@ public class CorrectionActivity extends Activity implements SeekBar.OnSeekBarCha
 
     @OnClick(R.id.reset_button)
     void onReset() {
-        mSeekBar.setProgress(500);
+        mDial.setValue(0);
     }
 
     @OnClick(R.id.grid_button)
@@ -159,47 +158,37 @@ public class CorrectionActivity extends Activity implements SeekBar.OnSeekBarCha
     }
 
     private void updateControls() {
-        float progress = 0;
         switch (mMode) {
             case ROTATE:
-                progress = mCorrection.getRotation() / 180;
+                mDial.setValue(mCorrection.getRotation());
+                mDial.setRange(-180, 180);
                 break;
             case VERTICAL_SKEW:
-                progress = mCorrection.getVerticalSkew();
+                mDial.setValue(mCorrection.getVerticalSkew());
+                mDial.setRange(-1, 1);
                 break;
             case HORIZONTAL_SKEW:
-                progress = mCorrection.getHorizontalSkew();
+                mDial.setValue(mCorrection.getHorizontalSkew());
+                mDial.setRange(-1, 1);
                 break;
         }
-        mSeekBar.setProgress((int)(progress * 1000 + 500));
     }
 
 
     @Override
-    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        float amount = (float)(progress - 500) / 1000; // -1 to +1
+    public void onDialValueChanged(double value) {
         switch (mMode) {
             case ROTATE:
-                mCorrection.setRotation(amount * 180);
+                mCorrection.setRotation(value);
                 break;
             case VERTICAL_SKEW:
-                mCorrection.setVerticalSkew(amount);
+                mCorrection.setVerticalSkew(value);
                 break;
             case HORIZONTAL_SKEW:
-                mCorrection.setHorizontalSkew(amount);
+                mCorrection.setHorizontalSkew(value);
                 break;
         }
         updateImage();
-    }
-
-    @Override
-    public void onStartTrackingTouch(SeekBar seekBar) {
-
-    }
-
-    @Override
-    public void onStopTrackingTouch(SeekBar seekBar) {
-
     }
 
     File getAlbumStorageDir(String albumName) {

@@ -6,14 +6,14 @@ import android.graphics.Matrix;
 public class CorrectionManager {
     private transient static final String TAG = CorrectionManager.class.getSimpleName();
 
-    private float mRotation;
-    private float mVerticalSkew;
-    private float mHorizontalSkew; // TODO
+    private double mRotation;
+    private double mVerticalSkew;
+    private double mHorizontalSkew; // TODO
 
     public Matrix getMatrix(Bitmap source) {
         Matrix matrix = new Matrix();
 
-        float skew = mHorizontalSkew * source.getWidth() * 0.5f;
+        float skew = (float) (mHorizontalSkew * source.getWidth() * 0.5f);
         float[] bounds = new float[] {
                 0, 0,
                 source.getWidth(), 0,
@@ -40,7 +40,7 @@ public class CorrectionManager {
 
         // rotate and scale the image to avoid write corners. Math
         // here is wrong, but almost right, I'll deal with this when I care more.
-        matrix.postRotate(mRotation, source.getWidth() / 2, source.getHeight() / 2);
+        matrix.postRotate((float) mRotation, source.getWidth() / 2, source.getHeight() / 2);
         double cos = Math.abs(Math.sin(Math.toRadians(mRotation) * 2));
         double scale = cos * (Math.sqrt(2) - 1) + 1;
         matrix.postScale((float)scale, (float)scale, source.getWidth() / 2, source.getHeight() / 2);
@@ -49,27 +49,27 @@ public class CorrectionManager {
     }
 
 
-    public float getRotation() {
+    public double getRotation() {
         return mRotation;
     }
 
-    public void setRotation(float rotation) {
+    public void setRotation(double rotation) {
         mRotation = rotation;
     }
 
-    public float getVerticalSkew() {
+    public double getVerticalSkew() {
         return mVerticalSkew;
     }
 
-    public void setVerticalSkew(float verticalSkew) {
+    public void setVerticalSkew(double verticalSkew) {
         mVerticalSkew = verticalSkew;
     }
 
-    public float getHorizontalSkew() {
+    public double getHorizontalSkew() {
         return mHorizontalSkew;
     }
 
-    public void setHorizontalSkew(float horizontalSkew) {
+    public void setHorizontalSkew(double horizontalSkew) {
         mHorizontalSkew = horizontalSkew;
     }
 }

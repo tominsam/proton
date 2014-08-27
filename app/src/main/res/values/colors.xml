@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="grid_color">#FFFF8000</color>
+    <color name="dial_background">#FF333333</color>
+    <color name="dial_major">#FFFFFFFF</color>
 </resources>

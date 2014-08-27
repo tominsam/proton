@@ -6,12 +6,19 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#FF999999"
     >
+
+    <View
+        android:layout_height="0dp"
+        android:layout_width="match_parent"
+        android:layout_weight="1"/>
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#FF000000"
+        android:layout_gravity="center_vertical"
         >
 
         <ImageView
@@ -33,30 +40,29 @@
         android:layout_width="match_parent"
         android:layout_weight="1"/>
 
-
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="48dp"
         android:orientation="horizontal">
 
         <Button
             android:id="@+id/rotate_button"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:background="@drawable/mode_button_background"
             android:text="rotate"
             />
         <Button
             android:id="@+id/horizontal_skew_button"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:background="@drawable/mode_button_background"
             android:text="hskew"
             />
         <Button
             android:id="@+id/vertical_skew_button"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:background="@drawable/mode_button_background"
             android:text="vskew"
             />
@@ -68,26 +74,23 @@
         <ToggleButton
             android:id="@+id/grid_button"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:textOn="Grid"
             android:textOff="Grid"
+            android:background="@drawable/mode_button_background"
             />
         <Button
             android:id="@+id/reset_button"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:text="X"
+            android:background="@drawable/mode_button_background"
             />
     </LinearLayout>
 
-    <SeekBar
-        android:id="@+id/seekbar"
+    <org.movieos.proton.DialControl
+        android:id="@+id/dial"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"
-        android:max="1000"
-        android:progress="500"
         />
-
 </LinearLayout>
