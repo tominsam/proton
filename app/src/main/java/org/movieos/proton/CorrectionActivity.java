@@ -3,27 +3,44 @@ package org.movieos.proton;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
+import android.media.ThumbnailUtils;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 
 import java.io.InputStream;
+import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import butterknife.InjectViews;
 
-public class CorrectionActivity extends Activity {
+public class CorrectionActivity extends Activity implements SeekBar.OnSeekBarChangeListener {
     private transient static final String TAG = CorrectionActivity.class.getSimpleName();
 
     @InjectView(R.id.image)
     ImageView mImageView;
 
-    @InjectView(R.id.seek)
-    SeekBar mSeek;
+    @InjectView(R.id.rotation)
+    SeekBar mRotation;
 
-//    IplImage mImage;
+    @InjectView(R.id.horizontal_distortion)
+    SeekBar mHorizontalSkew;
+
+    @InjectView(R.id.vertical_distortion)
+    SeekBar mVerticalSkew;
+
+    @InjectViews({
+            R.id.rotation,
+            R.id.horizontal_distortion,
+            R.id.vertical_distortion,
+    })
+    List<SeekBar> mSliders;
+
+    //    IplImage mImage;
     Bitmap mBitmap;
+    CorrectionManager mCorrection;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,33 +48,28 @@ public class CorrectionActivity extends Activity {
         setContentView(R.layout.correction_activity);
         ButterKnife.inject(this);
 
+        // TODO this needs to be a file loader, obviously
         InputStream photo = getResources().openRawResource(R.raw.photo);
+        Bitmap source = BitmapFactory.decodeStream(photo);
 
+        Log.i(TAG, "source is " + source.getWidth() + "x" + source.getHeight());
+
+
+        // Create scaled bitmap the size of the screen. This is probably
+        // cheaper than matrixing a huge jpeg.
         int size = getResources().getDisplayMetrics().widthPixels;
-        mBitmap = Bitmap.createScaledBitmap(BitmapFactory.decodeStream(photo), size, size, false);
-        mBitmap.setDensity(Bitmap.DENSITY_NONE);
+        // square crop
+        mBitmap = ThumbnailUtils.extractThumbnail(source, size, size);
+        //mBitmap = Bitmap.createScaledBitmap(source, size, size, false);
 
-//        mImage = IplImage.create(mBitmap.getWidth(), mBitmap.getHeight(), IPL_DEPTH_8U, 4);
-//        mBitmap.copyPixelsToBuffer(mImage.getByteBuffer());
+        mCorrection = new CorrectionManager();
+
+        mImageView.setScaleType(ImageView.ScaleType.MATRIX);
         mImageView.setImageBitmap(mBitmap);
 
-        mSeek.setProgress(100);
-        mSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                updateImage();
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });
+        for (SeekBar seek : mSliders) {
+            seek.setOnSeekBarChangeListener(this);
+        }
     }
 
     @Override
@@ -67,58 +79,30 @@ public class CorrectionActivity extends Activity {
     }
 
     private void updateImage() {
-//        IplImage output = cvCloneImage(mImage);
-
-//        int size = (mSeek.getProgress() / 50) * 2 - 1;
-//        Log.i(TAG, "size is " + size);
-        //cvSmooth(output, output, CV_GAUSSIAN, size, 0, 0, 0);
-
-//        float offset = (float)mSeek.getProgress() / 100 - 1;
-//
-//        CvPoint2D32f srcQuad = new CvPoint2D32f(4);
-//        srcQuad.put(0, 0, 20, 0, 20, 20, 0, 20);
-//        CvPoint2D32f dstQuad = new CvPoint2D32f(4);
-//        dstQuad.put(0, 0, 20 + offset, 0, 20, 20, 0, 20);
-//
-//        CvMat warp = cvCreateMat(3, 3, CV_32FC1);
-//        cvGetPerspectiveTransform(srcQuad, dstQuad, warp);
-//        cvWarpPerspective(output, output, warp);
-//
-//        Bitmap bitmapOut = Bitmap.createBitmap(mImage.width(), mImage.height(), Bitmap.Config.ARGB_8888);
-//        bitmapOut.copyPixelsFromBuffer(output.getByteBuffer());
-
-
-        Matrix matrix = new Matrix();
-
-        float skew = (float)(mSeek.getProgress() - 100)/100 * mBitmap.getWidth() * 0.2f;
-
-        float[] bounds = new float[] {
-                0, 0,
-                mBitmap.getWidth(), 0,
-                0, mBitmap.getHeight(),
-                mBitmap.getWidth(), mBitmap.getHeight()
-        };
-        float[] dest;
-        if (skew > 0) {
-            dest = new float[] {
-                    0, 0,
-                    mBitmap.getWidth(), 0,
-                    -skew, mBitmap.getHeight(),
-                    mBitmap.getWidth() + skew, mBitmap.getHeight()
-            };
-        } else {
-            dest = new float[] {
-                    skew, 0,
-                    mBitmap.getWidth() - skew, 0,
-                    0, mBitmap.getHeight(),
-                    mBitmap.getWidth(), mBitmap.getHeight()
-            };
-        }
-        matrix.setPolyToPoly(bounds, 0, dest, 0, 4);
-
-        mImageView.setImageMatrix(matrix);
-        mImageView.setScaleType(ImageView.ScaleType.MATRIX);
+        mImageView.setImageMatrix(mCorrection.getMatrix(mBitmap));
     }
 
 
+    @Override
+    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+        float amount = (float)(progress - 500) / 1000;
+        if (seekBar == mRotation) {
+            mCorrection.setRotation(amount * 180);
+        } else if (seekBar == mVerticalSkew) {
+            mCorrection.setVerticalSkew(amount);
+        } else if (seekBar == mHorizontalSkew) {
+            mCorrection.setHorizontalSkew(amount);
+        }
+        updateImage();
+    }
+
+    @Override
+    public void onStartTrackingTouch(SeekBar seekBar) {
+
+    }
+
+    @Override
+    public void onStopTrackingTouch(SeekBar seekBar) {
+
+    }
 }

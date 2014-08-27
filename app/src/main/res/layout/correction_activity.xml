@@ -5,28 +5,41 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#FF000000"
+    >
 
     <ImageView
         android:id="@+id/image"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_launcher"
+
+        android:background="#FFFFFFFF"
         />
 
-    <LinearLayout
+    <SeekBar
+        android:id="@+id/rotation"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:layout_height="48dp"
+        android:max="1000"
+        android:progress="500"
+        />
 
-        
-        <SeekBar
-            android:id="@+id/seek"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:max="200"
-            />
+    <SeekBar
+        android:id="@+id/horizontal_distortion"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:max="1000"
+        android:progress="500"
+        />
 
-        </LinearLayout>
+    <SeekBar
+        android:id="@+id/vertical_distortion"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:max="1000"
+        android:progress="500"
+        />
 
 </LinearLayout>
