@@ -21,6 +21,7 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -56,6 +57,7 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
     })
     List<Button> mButtons;
 
+    Bitmap mSource;
     Bitmap mBitmap;
     CorrectionManager mCorrection;
     Mode mMode = Mode.ROTATE;
@@ -67,14 +69,27 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
         setContentView(R.layout.correction_activity);
         ButterKnife.inject(this);
 
-        // TODO this needs to be a file loader, obviously
-        InputStream photo = getResources().openRawResource(R.raw.photo);
-        Bitmap source = BitmapFactory.decodeStream(photo);
+        Uri selectedImageUri = getIntent().getData();
+        mSource = getIntent().getExtras() == null ? null : (Bitmap) getIntent().getExtras().get("data");
+
+        if (selectedImageUri != null) {
+            try {
+                InputStream inputStream = getContentResolver().openInputStream(selectedImageUri);
+                mSource = BitmapFactory.decodeStream(inputStream);
+            } catch (FileNotFoundException e) {
+                Log.e(TAG, "error", e);
+            }
+        }
+
+        if (mSource == null) {
+            Toast.makeText(this, R.string.read_error, Toast.LENGTH_LONG).show();
+            finish();
+        }
 
         // Create scaled bitmap the size of the screen. This is probably
         // cheaper than matrixing a huge jpeg.
         int size = getResources().getDisplayMetrics().widthPixels;
-        mBitmap = ThumbnailUtils.extractThumbnail(source, size, size);
+        mBitmap = ThumbnailUtils.extractThumbnail(mSource, size, size);
 
         mCorrection = new CorrectionManager();
         updateControls();
@@ -97,7 +112,6 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.correction, menu);
-        MenuItem item = menu.findItem(R.id.action_share);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -200,11 +214,13 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
     }
 
     void writeToFile(File file) {
-        Bitmap output = Bitmap.createBitmap(mBitmap.getWidth(), mBitmap.getHeight(), mBitmap.getConfig());
+        int square = Math.min(mSource.getWidth(), mSource.getHeight());
+        Bitmap temp = ThumbnailUtils.extractThumbnail(mSource, square, square);
+        Bitmap output = Bitmap.createBitmap(temp.getWidth(), temp.getHeight(), temp.getConfig());
         Canvas canvas = new Canvas(output);
         Paint paint = new Paint();
         paint.setAntiAlias(true);
-        canvas.drawBitmap(mBitmap, mCorrection.getMatrix(mBitmap), paint);
+        canvas.drawBitmap(temp, mCorrection.getMatrix(temp), paint);
         try {
             FileOutputStream stream = new FileOutputStream(file);
             output.compress(Bitmap.CompressFormat.JPEG, 80, stream);
@@ -212,7 +228,6 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
         } catch (IOException e) {
             Log.e(TAG, "java.io.IOException", e);
             Toast.makeText(this, R.string.write_error, Toast.LENGTH_LONG).show();
-            return;
         } finally {
             output.recycle();
         }
