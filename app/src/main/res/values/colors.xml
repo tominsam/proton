@@ -3,4 +3,6 @@
     <color name="grid_color">#FFFF8000</color>
     <color name="dial_background">#FF333333</color>
     <color name="dial_major">#FFFFFFFF</color>
+    <color name="dial_cursor">#FFFF0000</color>
+    <color name="dial_minor">#FFaaaaaa</color>
 </resources>
