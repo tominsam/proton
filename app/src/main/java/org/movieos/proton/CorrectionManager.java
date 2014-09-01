@@ -13,7 +13,7 @@ public class CorrectionManager {
     public Matrix getMatrix(Bitmap source) {
         Matrix matrix = new Matrix();
 
-        float skew = (float) (mHorizontalSkew * source.getWidth() * 0.5f);
+        float hskew = (float) (mHorizontalSkew * source.getWidth() * 0.5f);
         float[] bounds = new float[] {
                 0, 0,
                 source.getWidth(), 0,
@@ -21,17 +21,17 @@ public class CorrectionManager {
                 source.getWidth(), source.getHeight()
         };
         float[] dest;
-        if (skew > 0) {
+        if (hskew > 0) {
             dest = new float[] {
                     0, 0,
                     source.getWidth(), 0,
-                    -skew, source.getHeight() + skew,
-                    source.getWidth() + skew, source.getHeight() + skew
+                    -hskew, source.getHeight() + hskew,
+                    source.getWidth() + hskew, source.getHeight() + hskew
             };
         } else {
             dest = new float[] {
-                    skew, skew,
-                    source.getWidth() - skew, skew,
+                    hskew, hskew,
+                    source.getWidth() - hskew, hskew,
                     0, source.getHeight(),
                     source.getWidth(), source.getHeight()
             };
