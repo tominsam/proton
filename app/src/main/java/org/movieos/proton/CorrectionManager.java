@@ -25,13 +25,13 @@ public class CorrectionManager {
             dest = new float[] {
                     0, 0,
                     source.getWidth(), 0,
-                    -skew, source.getHeight(),
-                    source.getWidth() + skew, source.getHeight()
+                    -skew, source.getHeight() + skew,
+                    source.getWidth() + skew, source.getHeight() + skew
             };
         } else {
             dest = new float[] {
-                    skew, 0,
-                    source.getWidth() - skew, 0,
+                    skew, skew,
+                    source.getWidth() - skew, skew,
                     0, source.getHeight(),
                     source.getWidth(), source.getHeight()
             };
