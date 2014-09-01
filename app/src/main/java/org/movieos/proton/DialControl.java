@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -110,22 +109,31 @@ public class DialControl extends View {
         int bottom = getHeight() - getResources().getDimensionPixelSize(R.dimen.dial_bottom);
         int major_top = getResources().getDimensionPixelSize(R.dimen.dial_major_top);
         int minor_top = getResources().getDimensionPixelSize(R.dimen.dial_minor_top);
-        for (int i = 0; i <20; i++) {
+        for (int i = 0; ; i++) {
             boolean major = i % mStepsPerMajor == 0;
             Paint paint = major ? mMajor : mMinor;
             int top = major ? major_top : minor_top;
             double value = mStep * i;
-            Log.i(TAG, "drawing value " + value);
 
             int left = valueToScreen(-value);
             int right = valueToScreen(+value);
-            Log.i(TAG, "screen psition is " + right + " for width " + getWidth());
 
-            canvas.drawLine(left, top, left, bottom, paint);
-            canvas.drawLine(right, top, right, bottom, paint);
+            if (left >= 0) {
+                canvas.drawLine(left, top, left, bottom, paint);
+            }
+            if (right <= getWidth()) {
+                canvas.drawLine(right, top, right, bottom, paint);
+            }
             if (major) {
-                canvas.drawText(String.format("%.1f", -i * mStep), left, getHeight(), paint);
-                canvas.drawText(String.format("%.1f", i * mStep), right, getHeight(), paint);
+                if (left > 0) {
+                    canvas.drawText(String.format("%.1f", -i * mStep), left, getHeight(), paint);
+                }
+                if (right < getWidth()) {
+                    canvas.drawText(String.format("%.1f", i * mStep), right, getHeight(), paint);
+                }
+            }
+            if (left < 0 && right > getWidth()) {
+                break;
             }
         }
 
@@ -167,7 +175,7 @@ public class DialControl extends View {
     }
 
     private int pixelToScreen(int pixel) {
-        return (int) (pixel + getWidth() / 2 + mDragOffset);
+        return pixel + getWidth() / 2 + mDragOffset;
     }
 
     private int valueToScreen(double value) {
