@@ -3,9 +3,12 @@ package org.movieos.proton;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
+import android.view.VelocityTracker;
 import android.view.View;
+import android.widget.OverScroller;
 
 public class DialControl extends View {
     private transient static final String TAG = DialControl.class.getSimpleName();
@@ -20,6 +23,8 @@ public class DialControl extends View {
     Paint mMajor;
     Paint mMinor;
     Paint mCursor;
+    VelocityTracker mVelocityTracker;
+    OverScroller mOverScroller;
 
     double mDragOffset = 0; // 0 means middle
 
@@ -30,9 +35,12 @@ public class DialControl extends View {
 
     float mTouchStartX;
     float mTouchStartY;
+    float mVelocity;
     double mTouchStartDragOffset = 0;
     double mStep = 1;
     private int mStepsPerMajor = 1;
+
+
 
     public DialControl(Context context) {
         super(context);
@@ -53,14 +61,15 @@ public class DialControl extends View {
         mGridSpacing = getResources().getDimensionPixelSize(R.dimen.grid_spacing);
         mBackground = new Paint();
         mBackground.setColor(getResources().getColor(R.color.dial_background));
+
         mMajor = new Paint();
         mMajor.setColor(getResources().getColor(R.color.dial_major));
-        mMajor.setTextSize(getResources().getDimensionPixelSize(R.dimen.dial_font_size));
         mMajor.setStrokeWidth(1);
 
         mNumbers = new Paint();
         mNumbers.setColor(getResources().getColor(R.color.dial_major));
         mNumbers.setTextAlign(Paint.Align.CENTER);
+        mNumbers.setTextSize(getResources().getDimensionPixelSize(R.dimen.dial_font_size));
         mNumbers.setAntiAlias(true);
 
         mMinor = new Paint();
@@ -70,6 +79,9 @@ public class DialControl extends View {
         mCursor = new Paint();
         mCursor.setStrokeWidth(1);
         mCursor.setColor(getResources().getColor(R.color.dial_cursor));
+
+        mOverScroller = new OverScroller(getContext());
+
     }
 
     @Override
@@ -113,6 +125,12 @@ public class DialControl extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         canvas.drawRect(0, 0, getWidth(), getHeight(), mBackground);
+
+        if (mOverScroller.computeScrollOffset()) {
+            mDragOffset = mOverScroller.getCurrX();
+            broadcastValue(pixelToValue(-mDragOffset));
+            ViewCompat.postInvalidateOnAnimation(this);
+        }
 
         // step outwards from the center
         int bottom = getHeight() - getResources().getDimensionPixelSize(R.dimen.dial_bottom);
@@ -158,12 +176,23 @@ public class DialControl extends View {
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
+                if (mVelocityTracker == null) {
+                    mVelocityTracker = VelocityTracker.obtain();
+                } else {
+                    mVelocityTracker.clear();
+                }
+                mOverScroller.forceFinished(true);
+                mVelocityTracker.addMovement(event);
                 mTouchStartX = event.getX();
                 mTouchStartY = event.getX();
                 mTouchStartDragOffset = mDragOffset;
                 return true;
 
             case MotionEvent.ACTION_MOVE:
+                mVelocityTracker.addMovement(event);
+                mVelocityTracker.computeCurrentVelocity(1000);
+                mVelocity = mVelocityTracker.getXVelocity();
+                ELog.i(TAG, "xvel is " + mVelocity);
                 float x = event.getX();
                 float change = x - mTouchStartX;
                 mDragOffset = mTouchStartDragOffset + (int)change;
@@ -175,6 +204,14 @@ public class DialControl extends View {
 
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
+                mOverScroller.forceFinished(true);
+                mOverScroller.fling((int)mDragOffset, 0, (int)mVelocity, 0, valueToPixel(-mMax), valueToPixel(mMax), 0, 0);
+                ViewCompat.postInvalidateOnAnimation(this);
+
+                mVelocityTracker.recycle();
+                mVelocityTracker = null;
+                return true;
+
             default:
                 return super.onTouchEvent(event);
         }

@@ -56,4 +56,5 @@ android.signingConfigs.release.keyPassword = props.keyAliasPassword
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.jakewharton:butterknife:5.1.2'
+    compile 'com.android.support:support-v4:20.0.0'
 }
