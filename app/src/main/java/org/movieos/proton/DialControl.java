@@ -22,15 +22,15 @@ public class DialControl extends View {
 
     int mDragOffset = 0; // 0 means middle
 
-    double mMax = 1;
-    double mMin = -1;
+    double mMax = 100;
+    double mMin = -100;
     OnDialChangeListener mListener;
 
     float mTouchStartX;
     float mTouchStartY;
-    int mTouchStartDragOffset;
-    double mStep;
-    private int mStepsPerMajor;
+    int mTouchStartDragOffset = 0;
+    double mStep = 1;
+    private int mStepsPerMajor = 1;
 
     public DialControl(Context context) {
         super(context);
@@ -126,15 +126,19 @@ public class DialControl extends View {
             }
             if (major) {
                 if (left > 0) {
-                    canvas.drawText(String.format("%.1f", -i * mStep), left, getHeight(), paint);
+                    canvas.drawText(String.format("%.0f", -i * mStep), left, getHeight(), paint);
                 }
                 if (right < getWidth()) {
-                    canvas.drawText(String.format("%.1f", i * mStep), right, getHeight(), paint);
+                    canvas.drawText(String.format("%.0f", i * mStep), right, getHeight(), paint);
                 }
             }
             if (left < 0 && right > getWidth()) {
                 break;
             }
+            if (value >= mMax) {
+                break;
+            }
+
         }
 
         canvas.drawLine(getWidth() / 2, 0, getWidth() / 2, getHeight(), mCursor);
@@ -155,7 +159,7 @@ public class DialControl extends View {
                 mDragOffset = mTouchStartDragOffset + (int)change;
                 mDragOffset = Math.min(mDragOffset, getWidth() * 5);
                 mDragOffset = Math.max(mDragOffset, getWidth() * -5);
-                broadcastValue(pixelToValue(mDragOffset));
+                broadcastValue(pixelToValue(-mDragOffset));
                 invalidate();
                 return true;
 
@@ -191,7 +195,7 @@ public class DialControl extends View {
     }
 
     public void setValue(double value) {
-        mDragOffset = valueToPixel(value);
+        mDragOffset = -valueToPixel(value);
         invalidate();
         broadcastValue(value);
     }

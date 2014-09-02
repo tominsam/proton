@@ -5,11 +5,12 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -89,7 +90,7 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
             }
         }
 
-        if (getIntent().getAction().equals(Intent.ACTION_SEND) && getIntent().getType() != null) {
+        if (TextUtils.equals(getIntent().getAction(), Intent.ACTION_SEND) && getIntent().getType() != null) {
             // mime type share - share intent
             Uri send = getIntent().getParcelableExtra(Intent.EXTRA_STREAM);
             try {
@@ -107,15 +108,25 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
 
         // Create scaled bitmap the size of the screen. This is probably
         // cheaper than matrixing a huge jpeg.
-        int size = getResources().getDisplayMetrics().widthPixels;
-        mBitmap = ThumbnailUtils.extractThumbnail(mSource, size, size);
+        mImageView.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            @Override
+            public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                float width = right - left;
+                float height = bottom - top;
+                float scale = Math.min(width / mSource.getWidth(), height / mSource.getHeight());
+                Log.i(TAG, "layout changed scale now " + scale);
+                mBitmap = Bitmap.createScaledBitmap(mSource, (int) (mSource.getWidth() * scale), (int) (mSource.getHeight() * scale), true);
+                Log.i(TAG, String.format("view is %s by %s and image is %s by %s", width, height, mBitmap.getWidth(), mBitmap.getHeight()));
+                mImageView.setImageBitmap(mBitmap);
+                updateImage();
+            }
+        });
 
         mCorrection = new CorrectionManager();
         updateControls();
         activate((Button) findViewById(R.id.rotate_button));
 
         mImageView.setScaleType(ImageView.ScaleType.MATRIX);
-        mImageView.setImageBitmap(mBitmap);
 
         mGrid.setVisibility(View.INVISIBLE);
 
@@ -187,19 +198,26 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
     }
 
     private void updateImage() {
-        mImageView.setImageMatrix(mCorrection.getMatrix(mBitmap));
+        if (mBitmap != null) {
+            Matrix matrix = mCorrection.getMatrix(mBitmap);
+            // center the image in the view
+            int xdiff = mImageView.getWidth() - mBitmap.getWidth();
+            int ydiff = mImageView.getHeight() - mBitmap.getHeight();
+            matrix.postTranslate(xdiff / 2, ydiff / 2);
+            mImageView.setImageMatrix(matrix);
+        }
     }
 
     private void updateControls() {
         switch (mMode) {
             case ROTATE:
-                mDial.setValue(mCorrection.getRotation(), -90, 90, 0.5, 2);
+                mDial.setValue(mCorrection.getRotation(), -45, 45, 0.1, 10);
                 break;
             case VERTICAL_SKEW:
-                mDial.setValue(mCorrection.getVerticalSkew(), -1, 1, 0.005, 5);
+                mDial.setValue(mCorrection.getVerticalSkew(), -20, 20, 0.1, 10);
                 break;
             case HORIZONTAL_SKEW:
-                mDial.setValue(mCorrection.getHorizontalSkew(), -1, 1, 0.005, 5);
+                mDial.setValue(mCorrection.getHorizontalSkew(), -20, 20, 0.1, 10);
                 break;
         }
     }
@@ -230,13 +248,11 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
     }
 
     void writeToFile(File file) {
-        int square = Math.min(mSource.getWidth(), mSource.getHeight());
-        Bitmap temp = ThumbnailUtils.extractThumbnail(mSource, square, square);
-        Bitmap output = Bitmap.createBitmap(temp.getWidth(), temp.getHeight(), temp.getConfig());
+        Bitmap output = Bitmap.createBitmap(mSource.getWidth(), mSource.getHeight(), mSource.getConfig());
         Canvas canvas = new Canvas(output);
         Paint paint = new Paint();
         paint.setAntiAlias(true);
-        canvas.drawBitmap(temp, mCorrection.getMatrix(temp), paint);
+        canvas.drawBitmap(mSource, mCorrection.getMatrix(mSource), paint);
         try {
             FileOutputStream stream = new FileOutputStream(file);
             output.compress(Bitmap.CompressFormat.JPEG, 80, stream);

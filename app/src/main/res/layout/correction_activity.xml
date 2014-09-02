@@ -9,15 +9,11 @@
     android:background="#FF999999"
     >
 
-    <View
-        android:layout_height="0dp"
-        android:layout_width="match_parent"
-        android:layout_weight="1"/>
-
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#FF000000"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#FF666666"
         android:layout_gravity="center_vertical"
         >
 
@@ -30,15 +26,10 @@
         <org.movieos.proton.GridOverlay
             android:id="@+id/grid"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             />
 
     </FrameLayout>
-
-    <View
-        android:layout_height="0dp"
-        android:layout_width="match_parent"
-        android:layout_weight="1"/>
 
     <LinearLayout
         android:layout_width="match_parent"

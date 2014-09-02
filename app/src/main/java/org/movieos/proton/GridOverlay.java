@@ -37,6 +37,7 @@ public class GridOverlay extends View {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int desiredWidth = 0;
+        int desiredHeight = 0;
 
         int widthMode = MeasureSpec.getMode(widthMeasureSpec);
         int widthSize = MeasureSpec.getSize(widthMeasureSpec);
@@ -53,9 +54,6 @@ public class GridOverlay extends View {
         } else {
             width = desiredWidth;
         }
-
-        // I want to be square
-        int desiredHeight = width;
 
         if (heightMode == MeasureSpec.EXACTLY) {
             height = heightSize;
