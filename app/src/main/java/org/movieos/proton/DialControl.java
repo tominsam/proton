@@ -16,6 +16,7 @@ public class DialControl extends View {
 
     int mGridSpacing;
     Paint mBackground;
+    Paint mNumbers;
     Paint mMajor;
     Paint mMinor;
     Paint mCursor;
@@ -54,10 +55,13 @@ public class DialControl extends View {
         mBackground.setColor(getResources().getColor(R.color.dial_background));
         mMajor = new Paint();
         mMajor.setColor(getResources().getColor(R.color.dial_major));
-        mMajor.setTextAlign(Paint.Align.CENTER);
         mMajor.setTextSize(getResources().getDimensionPixelSize(R.dimen.dial_font_size));
         mMajor.setStrokeWidth(1);
-        mMajor.setAntiAlias(true);
+
+        mNumbers = new Paint();
+        mNumbers.setColor(getResources().getColor(R.color.dial_major));
+        mNumbers.setTextAlign(Paint.Align.CENTER);
+        mNumbers.setAntiAlias(true);
 
         mMinor = new Paint();
         mMinor.setStrokeWidth(1);
@@ -114,6 +118,7 @@ public class DialControl extends View {
         int bottom = getHeight() - getResources().getDimensionPixelSize(R.dimen.dial_bottom);
         int major_top = getResources().getDimensionPixelSize(R.dimen.dial_major_top);
         int minor_top = getResources().getDimensionPixelSize(R.dimen.dial_minor_top);
+        int text_bottom = getResources().getDimensionPixelSize(R.dimen.dial_text_bottom);
         for (int i = 0; ; i++) {
             boolean major = i % mStepsPerMajor == 0;
             Paint paint = major ? mMajor : mMinor;
@@ -131,10 +136,10 @@ public class DialControl extends View {
             }
             if (major) {
                 if (left > 0) {
-                    canvas.drawText(String.format("%.0f", -i * mStep), left, getHeight(), paint);
+                    canvas.drawText(String.format("%.0f", -i * mStep), left, getHeight() - text_bottom, mNumbers);
                 }
                 if (right < getWidth()) {
-                    canvas.drawText(String.format("%.0f", i * mStep), right, getHeight(), paint);
+                    canvas.drawText(String.format("%.0f", i * mStep), right, getHeight() - text_bottom, mNumbers);
                 }
             }
             if (left < 0 && right > getWidth()) {

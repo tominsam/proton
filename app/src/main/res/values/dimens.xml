@@ -5,7 +5,8 @@
     <dimen name="grid_spacing">20dp</dimen>
     <dimen name="dial_height">56dp</dimen>
     <dimen name="dial_major_top">10dp</dimen>
-    <dimen name="dial_minor_top">25dp</dimen>
+    <dimen name="dial_minor_top">15dp</dimen>
     <dimen name="dial_bottom">20dp</dimen>
     <dimen name="dial_font_size">10sp</dimen>
+    <dimen name="dial_text_bottom">8dp</dimen>
 </resources>
