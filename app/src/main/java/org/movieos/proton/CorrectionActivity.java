@@ -69,12 +69,31 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
         setContentView(R.layout.correction_activity);
         ButterKnife.inject(this);
 
+        // start paths:
+        // (a) opened with URI (MainActivity document picker)
+        // (b) Opened with bitmap in data (MainActivity camera)
+        // (c) Opened with share intent
+
         Uri selectedImageUri = getIntent().getData();
+
+        // bitmap in data
         mSource = getIntent().getExtras() == null ? null : (Bitmap) getIntent().getExtras().get("data");
 
         if (selectedImageUri != null) {
+            // MainActivity document picker
             try {
                 InputStream inputStream = getContentResolver().openInputStream(selectedImageUri);
+                mSource = BitmapFactory.decodeStream(inputStream);
+            } catch (FileNotFoundException e) {
+                Log.e(TAG, "error", e);
+            }
+        }
+
+        if (getIntent().getAction().equals(Intent.ACTION_SEND) && getIntent().getType() != null) {
+            // mime type share - share intent
+            Uri send = getIntent().getParcelableExtra(Intent.EXTRA_STREAM);
+            try {
+                InputStream inputStream = getContentResolver().openInputStream(send);
                 mSource = BitmapFactory.decodeStream(inputStream);
             } catch (FileNotFoundException e) {
                 Log.e(TAG, "error", e);
