@@ -11,7 +11,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -86,7 +85,7 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
                 InputStream inputStream = getContentResolver().openInputStream(selectedImageUri);
                 mSource = BitmapFactory.decodeStream(inputStream);
             } catch (FileNotFoundException e) {
-                Log.e(TAG, "error", e);
+                ELog.e(TAG, "error", e);
             }
         }
 
@@ -97,7 +96,7 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
                 InputStream inputStream = getContentResolver().openInputStream(send);
                 mSource = BitmapFactory.decodeStream(inputStream);
             } catch (FileNotFoundException e) {
-                Log.e(TAG, "error", e);
+                ELog.e(TAG, "error", e);
             }
         }
 
@@ -115,9 +114,9 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
                 float width = right - left;
                 float height = bottom - top;
                 float scale = Math.min(width / mSource.getWidth(), height / mSource.getHeight());
-                Log.i(TAG, "layout changed scale now " + scale);
+                ELog.i(TAG, "layout changed scale now " + scale);
                 mBitmap = Bitmap.createScaledBitmap(mSource, (int) (mSource.getWidth() * scale), (int) (mSource.getHeight() * scale), true);
-                Log.i(TAG, String.format("view is %s by %s and image is %s by %s", width, height, mBitmap.getWidth(), mBitmap.getHeight()));
+                ELog.i(TAG, String.format("view is %s by %s and image is %s by %s", width, height, mBitmap.getWidth(), mBitmap.getHeight()));
                 mImageView.setImageBitmap(mBitmap);
                 updateImage();
             }
@@ -245,7 +244,7 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
     File getAlbumStorageDir(String albumName) {
         File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), albumName);
         if (!file.mkdirs()) {
-            Log.e(TAG, "Directory not created");
+            ELog.e(TAG, "Directory not created");
         }
         return file;
     }
@@ -261,7 +260,7 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
             output.compress(Bitmap.CompressFormat.JPEG, 80, stream);
             stream.close();
         } catch (IOException e) {
-            Log.e(TAG, "java.io.IOException", e);
+            ELog.e(TAG, "java.io.IOException", e);
             Toast.makeText(this, R.string.write_error, Toast.LENGTH_LONG).show();
         } finally {
             output.recycle();
@@ -289,7 +288,7 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
         }
         File temp = new File(folder, filename());
         writeToFile(temp);
-        Log.i(TAG, "tmep is " + temp.toURI());
+        ELog.i(TAG, "tmep is " + temp.toURI());
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
         intent.setType("image/jpeg");
