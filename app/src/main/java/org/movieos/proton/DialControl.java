@@ -20,17 +20,16 @@ public class DialControl extends View {
     Paint mMinor;
     Paint mCursor;
 
-    int mDragOffset = 0; // 0 means middle
+    double mDragOffset = 0; // 0 means middle
 
-    int widthMultiplier = 3; // even!
+    double mWidthMultiplier = 3;
 
-    double mMax = 100;
-    double mMin = -100;
+    double mMax = 100; // assumption - 0 is the middle, don't need min
     OnDialChangeListener mListener;
 
     float mTouchStartX;
     float mTouchStartY;
-    int mTouchStartDragOffset = 0;
+    double mTouchStartDragOffset = 0;
     double mStep = 1;
     private int mStepsPerMajor = 1;
 
@@ -163,8 +162,8 @@ public class DialControl extends View {
                 float x = event.getX();
                 float change = x - mTouchStartX;
                 mDragOffset = mTouchStartDragOffset + (int)change;
-                mDragOffset = Math.min(mDragOffset, getWidth() * widthMultiplier);
-                mDragOffset = Math.max(mDragOffset, getWidth() * -widthMultiplier);
+                mDragOffset = Math.min(mDragOffset, getWidth() * mWidthMultiplier);
+                mDragOffset = Math.max(getWidth() * -mWidthMultiplier, mDragOffset);
                 broadcastValue(pixelToValue(-mDragOffset));
                 invalidate();
                 return true;
@@ -176,27 +175,27 @@ public class DialControl extends View {
         }
     }
 
-    private double pixelToValue(int pixel) {
-        return pixel * mMax / (getWidth() * widthMultiplier);
+    private double pixelToValue(double pixel) {
+        return pixel * mMax / (getWidth() * mWidthMultiplier);
     }
 
     private int valueToPixel(double value) {
-        return (int) (value * (getWidth() * widthMultiplier) / mMax);
+        return (int) (value * (getWidth() * mWidthMultiplier) / mMax);
     }
 
     private int pixelToScreen(int pixel) {
-        return pixel + getWidth() / 2 + mDragOffset;
+        return (int) (pixel + getWidth() / 2 + mDragOffset);
     }
 
     private int valueToScreen(double value) {
         return pixelToScreen(valueToPixel(value));
     }
 
-    public void setValue(double value, int min, int max, double step, int stepsPerMajor) {
-        mMin = min;
+    public void setValue(double value, int max, double step, int stepsPerMajor) {
         mMax = max;
         mStep = step;
         mStepsPerMajor = stepsPerMajor;
+        mWidthMultiplier = (max / step) / 60;
         setValue(value);
     }
 

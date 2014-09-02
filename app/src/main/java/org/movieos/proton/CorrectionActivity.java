@@ -214,13 +214,13 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
     private void updateControls() {
         switch (mMode) {
             case ROTATE:
-                mDial.setValue(mCorrection.getRotation(), -45, 45, 0.1, 10);
+                mDial.setValue(mCorrection.getRotation(), 45, 0.1, 10);
                 break;
             case VERTICAL_SKEW:
-                mDial.setValue(mCorrection.getVerticalSkew(), -20, 20, 0.1, 10);
+                mDial.setValue(mCorrection.getVerticalSkew(), 40, 0.1, 10);
                 break;
             case HORIZONTAL_SKEW:
-                mDial.setValue(mCorrection.getHorizontalSkew(), -20, 20, 0.1, 10);
+                mDial.setValue(mCorrection.getHorizontalSkew(), 40, 0.1, 10);
                 break;
         }
     }
