@@ -108,6 +108,7 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
 
         // Create scaled bitmap the size of the screen. This is probably
         // cheaper than matrixing a huge jpeg.
+
         mImageView.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
             @Override
             public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
@@ -127,6 +128,8 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
         activate((Button) findViewById(R.id.rotate_button));
 
         mImageView.setScaleType(ImageView.ScaleType.MATRIX);
+        // temporary bitmap to force scaling
+        mImageView.setImageBitmap(mSource);
 
         mGrid.setVisibility(View.INVISIBLE);
 

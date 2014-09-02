@@ -22,6 +22,8 @@ public class DialControl extends View {
 
     int mDragOffset = 0; // 0 means middle
 
+    int widthMultiplier = 3; // even!
+
     double mMax = 100;
     double mMin = -100;
     OnDialChangeListener mListener;
@@ -55,11 +57,15 @@ public class DialControl extends View {
         mMajor.setColor(getResources().getColor(R.color.dial_major));
         mMajor.setTextAlign(Paint.Align.CENTER);
         mMajor.setTextSize(getResources().getDimensionPixelSize(R.dimen.dial_font_size));
+        mMajor.setStrokeWidth(1);
         mMajor.setAntiAlias(true);
 
         mMinor = new Paint();
+        mMinor.setStrokeWidth(1);
         mMinor.setColor(getResources().getColor(R.color.dial_minor));
+
         mCursor = new Paint();
+        mCursor.setStrokeWidth(1);
         mCursor.setColor(getResources().getColor(R.color.dial_cursor));
     }
 
@@ -157,8 +163,8 @@ public class DialControl extends View {
                 float x = event.getX();
                 float change = x - mTouchStartX;
                 mDragOffset = mTouchStartDragOffset + (int)change;
-                mDragOffset = Math.min(mDragOffset, getWidth() * 5);
-                mDragOffset = Math.max(mDragOffset, getWidth() * -5);
+                mDragOffset = Math.min(mDragOffset, getWidth() * widthMultiplier);
+                mDragOffset = Math.max(mDragOffset, getWidth() * -widthMultiplier);
                 broadcastValue(pixelToValue(-mDragOffset));
                 invalidate();
                 return true;
@@ -171,11 +177,11 @@ public class DialControl extends View {
     }
 
     private double pixelToValue(int pixel) {
-        return pixel * mMax / (getWidth() * 5);
+        return pixel * mMax / (getWidth() * widthMultiplier);
     }
 
     private int valueToPixel(double value) {
-        return (int) (value * (getWidth() * 5) / mMax);
+        return (int) (value * (getWidth() * widthMultiplier) / mMax);
     }
 
     private int pixelToScreen(int pixel) {
