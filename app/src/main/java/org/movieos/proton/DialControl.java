@@ -202,12 +202,16 @@ public class DialControl extends View {
                 invalidate();
                 return true;
 
-            case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
+                mOverScroller.forceFinished(true);
+                mVelocityTracker.recycle();
+                mVelocityTracker = null;
+                return true;
+
+            case MotionEvent.ACTION_UP:
                 mOverScroller.forceFinished(true);
                 mOverScroller.fling((int)mDragOffset, 0, (int)mVelocity, 0, valueToPixel(-mMax), valueToPixel(mMax), 0, 0);
                 ViewCompat.postInvalidateOnAnimation(this);
-
                 mVelocityTracker.recycle();
                 mVelocityTracker = null;
                 return true;
