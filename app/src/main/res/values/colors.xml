@@ -1,8 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="grid_color">#FFFF8000</color>
-    <color name="dial_background">#FF333333</color>
+    <color name="dark_background">#FF563444</color>
+    <color name="dark_foreground">#FF6A5E72</color>
+    <color name="light_background">#FFDAD6CA</color>
+    <color name="light_forground">#FF4F8699</color>
+    <color name="hilight">#FF1BB0CE</color>
+
+    <color name="window_background">@color/light_background</color>
+    <color name="grid_color">@color/hilight</color>
+
+    <!--<color name="dial_background">@color/dark_background</color>-->
     <color name="dial_major">#FFFFFFFF</color>
-    <color name="dial_cursor">#FFFF0000</color>
+    <color name="dial_cursor">@color/dark_foreground</color>
     <color name="dial_minor">#FF999999</color>
+
+
 </resources>
