@@ -1,5 +1,6 @@
 package org.movieos.proton;
 
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -184,7 +185,7 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
 
     @OnClick(R.id.reset_button)
     void onReset() {
-        mDial.setValue(0);
+        mDial.setValue(0, true);
     }
 
     @OnClick(R.id.grid_button)

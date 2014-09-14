@@ -1,5 +1,6 @@
 package org.movieos.proton;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -8,6 +9,7 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.OverScroller;
 
 public class DialControl extends View {
@@ -18,13 +20,14 @@ public class DialControl extends View {
     }
 
     int mGridSpacing;
-    Paint mBackground;
+    //Paint mBackground;
     Paint mNumbers;
     Paint mMajor;
     Paint mMinor;
     Paint mCursor;
     VelocityTracker mVelocityTracker;
     OverScroller mOverScroller;
+    ValueAnimator mValueAnimator;
 
     double mDragOffset = 0; // 0 means middle
 
@@ -59,8 +62,8 @@ public class DialControl extends View {
 
     void init() {
         mGridSpacing = getResources().getDimensionPixelSize(R.dimen.grid_spacing);
-        mBackground = new Paint();
-        mBackground.setColor(getResources().getColor(R.color.dial_background));
+//        mBackground = new Paint();
+//        mBackground.setColor(getResources().getColor(R.color.dial_background));
 
         mMajor = new Paint();
         mMajor.setColor(getResources().getColor(R.color.dial_major));
@@ -124,11 +127,11 @@ public class DialControl extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        canvas.drawRect(0, 0, getWidth(), getHeight(), mBackground);
+        //canvas.drawRect(0, 0, getWidth(), getHeight(), mBackground);
 
         if (mOverScroller.computeScrollOffset()) {
             mDragOffset = mOverScroller.getCurrX();
-            broadcastValue(pixelToValue(-mDragOffset));
+            broadcastValue();
             ViewCompat.postInvalidateOnAnimation(this);
         }
 
@@ -182,6 +185,7 @@ public class DialControl extends View {
                     mVelocityTracker.clear();
                 }
                 mOverScroller.forceFinished(true);
+                ViewCompat.postInvalidateOnAnimation(this);
                 mVelocityTracker.addMovement(event);
                 mTouchStartX = event.getX();
                 mTouchStartY = event.getX();
@@ -198,7 +202,7 @@ public class DialControl extends View {
                 mDragOffset = mTouchStartDragOffset + (int)change;
                 mDragOffset = Math.min(mDragOffset, getWidth() * mWidthMultiplier);
                 mDragOffset = Math.max(getWidth() * -mWidthMultiplier, mDragOffset);
-                broadcastValue(pixelToValue(-mDragOffset));
+                broadcastValue();
                 invalidate();
                 return true;
 
@@ -242,22 +246,44 @@ public class DialControl extends View {
         mStep = step;
         mStepsPerMajor = stepsPerMajor;
         mWidthMultiplier = (max / step) / 60;
-        setValue(value);
+        setValue(value, false);
     }
 
-    public void setValue(double value) {
-        mDragOffset = -valueToPixel(value);
-        invalidate();
-        broadcastValue(value);
+    public void setValue(double value, boolean animate) {
+        mOverScroller.forceFinished(true);
+        double target = -valueToPixel(value);
+        if (animate) {
+            if (mValueAnimator != null) {
+                mValueAnimator.cancel();
+            }
+            mValueAnimator = ValueAnimator.ofFloat((float)mDragOffset, (float)target);
+            mValueAnimator.setDuration(200);
+            mValueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator animation) {
+                    ELog.i(TAG, "value is " + animation.getAnimatedValue());
+                    mDragOffset = (Float) animation.getAnimatedValue();
+                    invalidate();
+                    broadcastValue();
+                }
+            });
+            mValueAnimator.setInterpolator(new DecelerateInterpolator());
+            mValueAnimator.start();
+
+        } else {
+            mDragOffset = target;
+            invalidate();
+            broadcastValue();
+        }
     }
 
     public void setOnChangeListener(OnDialChangeListener listener) {
         mListener = listener;
     }
 
-    public void broadcastValue(double value) {
+    public void broadcastValue() {
         if (mListener != null) {
-            mListener.onDialValueChanged(value);
+            mListener.onDialValueChanged(-pixelToValue(mDragOffset));
         }
     }
 }
