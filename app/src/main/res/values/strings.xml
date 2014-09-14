@@ -2,14 +2,13 @@
 <resources>
 
     <string name="app_name">Proton</string>
-    <string name="hello_world">Hello world!</string>
-    <string name="action_settings">Settings</string>
-    <string name="go">Go</string>
     <string name="action_share">Share</string>
     <string name="action_save">Save</string>
     <string name="write_error">Can\'t write image to disk</string>
     <string name="share_title">Share Image</string>
     <string name="save_complete">Save complete</string>
     <string name="read_error">Error reading image</string>
+    <string name="camera">Camera</string>
+    <string name="gallery">Gallery</string>
 
 </resources>

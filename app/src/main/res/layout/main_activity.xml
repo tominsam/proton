@@ -19,6 +19,12 @@
         android:textColor="#FF666666"
         />
 
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_launcher"
+        />
+
     <Button
         android:id="@+id/main_activity_camera"
         android:layout_width="wrap_content"

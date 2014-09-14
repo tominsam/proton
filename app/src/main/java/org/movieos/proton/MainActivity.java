@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -38,16 +37,17 @@ public class MainActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
-    @OnClick(android.R.id.button1)
-    void goClicked() {
+    @OnClick(R.id.main_activity_camera)
+    void onClickCamera() {
+        startActivityForResult(new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE), RESULT_LOAD_IMAGE);
+    }
+
+    @OnClick(R.id.main_activity_gallery)
+    void onClickGallery() {
         Intent imageGalleryIntent = new Intent(Intent.ACTION_GET_CONTENT);
         imageGalleryIntent.addCategory(Intent.CATEGORY_OPENABLE);
         imageGalleryIntent.setType("image/*");
-        Intent captureIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-        Intent chooserIntent = Intent.createChooser(imageGalleryIntent, "Image Chooser");
-        chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Parcelable[]{ captureIntent });
-        startActivityForResult(chooserIntent, RESULT_LOAD_IMAGE);
-
+        startActivityForResult(imageGalleryIntent, RESULT_LOAD_IMAGE);
     }
 
     @Override
