@@ -36,6 +36,8 @@ import butterknife.OnClick;
 public class CorrectionActivity extends Activity implements DialControl.OnDialChangeListener {
     private transient static final String TAG = CorrectionActivity.class.getSimpleName();
 
+    private static final boolean ALWAYS_SAVE = true; // TODO setting or something
+
     enum Mode {
         ROTATE, VERTICAL_SKEW, HORIZONTAL_SKEW
     };
@@ -151,6 +153,7 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
         switch (item.getItemId()) {
             case R.id.action_save:
                 save();
+                Toast.makeText(this, R.string.save_complete, Toast.LENGTH_LONG).show();
                 return true;
             case R.id.action_share:
                 share();
@@ -267,10 +270,11 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
         }
     }
 
-    void save() {
+    File save() {
         File album = getAlbumStorageDir(getString(R.string.app_name));
-        writeToFile(new File(album, filename()));
-        Toast.makeText(this, R.string.save_complete, Toast.LENGTH_LONG).show();
+        File file = new File(album, filename());
+        writeToFile(file);
+        return file;
     }
 
     String filename() {
@@ -279,20 +283,25 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
     }
 
     void share() {
-        File folder = new File(getExternalFilesDir("share"), "temp");
-        folder.mkdirs();
-        // cleaning up after share is hard, we'll clean up before share
-        // which is 90% as good and way easier to follow.
-        for (String filename : folder.list()) {
-            new File(folder, filename).delete();
+        File saved;
+        if (ALWAYS_SAVE) {
+            saved = save();
+        } else {
+            File folder = new File(getExternalFilesDir("share"), "temp");
+            folder.mkdirs();
+            // cleaning up after share is hard, we'll clean up before share
+            // which is 90% as good and way easier to follow.
+            for (String filename : folder.list()) {
+                new File(folder, filename).delete();
+            }
+            saved = new File(folder, filename());
+            writeToFile(saved);
         }
-        File temp = new File(folder, filename());
-        writeToFile(temp);
-        ELog.i(TAG, "tmep is " + temp.toURI());
+
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
         intent.setType("image/jpeg");
-        intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(temp));
+        intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(saved));
         startActivity(Intent.createChooser(intent, getString(R.string.share_title)));
     }
 }
