@@ -1,6 +1,5 @@
 package org.movieos.proton;
 
-import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -15,11 +14,10 @@ import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ShareActionProvider;
 import android.widget.Toast;
-import android.widget.ToggleButton;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -56,7 +54,7 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
             R.id.vertical_skew_button,
             R.id.horizontal_skew_button
     })
-    List<Button> mButtons;
+    List<ImageButton> mButtons;
 
     Bitmap mSource;
     Bitmap mBitmap;
@@ -125,7 +123,7 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
 
         mCorrection = new CorrectionManager();
         updateControls();
-        activate((Button) findViewById(R.id.rotate_button));
+        activate((ImageButton)findViewById(R.id.rotate_button));
 
         mImageView.setScaleType(ImageView.ScaleType.MATRIX);
         // temporary bitmap to force scaling
@@ -163,21 +161,21 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
     }
 
     @OnClick(R.id.rotate_button)
-    void onRotate(Button v) {
+    void onRotate(ImageButton v) {
         mMode = Mode.ROTATE;
         updateControls();
         activate(v);
     }
 
     @OnClick(R.id.vertical_skew_button)
-    void onVertical(Button v) {
+    void onVertical(ImageButton v) {
         mMode = Mode.VERTICAL_SKEW;
         updateControls();
         activate(v);
     }
 
     @OnClick(R.id.horizontal_skew_button)
-    void onHorizontal(Button v) {
+    void onHorizontal(ImageButton v) {
         mMode = Mode.HORIZONTAL_SKEW;
         updateControls();
         activate(v);
@@ -189,12 +187,13 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
     }
 
     @OnClick(R.id.grid_button)
-    void onGrid(ToggleButton b) {
-        mGrid.setVisibility(b.isChecked() ? View.VISIBLE : View.INVISIBLE);
+    void onGrid(ImageButton b) {
+        b.setActivated(!b.isActivated());
+        mGrid.setVisibility(b.isActivated() ? View.VISIBLE : View.INVISIBLE);
     }
 
-    void activate(Button v) {
-        for (Button b : mButtons) {
+    void activate(ImageButton v) {
+        for (ImageButton b : mButtons) {
             b.setActivated(false);
         }
         v.setActivated(true);

@@ -34,48 +34,49 @@
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:orientation="horizontal"
+        android:dividerPadding="10dp"
+        android:divider="@android:color/transparent"
         >
 
-        <Button
+        <ImageButton
             android:id="@+id/rotate_button"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:background="@drawable/mode_button_background"
-            android:text="rotate"
+            android:src="@drawable/ic_rotate"
             />
-        <Button
+        <ImageButton
             android:id="@+id/horizontal_skew_button"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:background="@drawable/mode_button_background"
-            android:text="hskew"
+            android:src="@drawable/ic_hskew"
             />
-        <Button
+        <ImageButton
             android:id="@+id/vertical_skew_button"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:background="@drawable/mode_button_background"
-            android:text="vskew"
+            android:src="@drawable/ic_vskew"
             />
         <View
             android:layout_height="match_parent"
             android:layout_width="0dp"
             android:layout_weight="1"/>
 
-        <ToggleButton
+        <ImageButton
             android:id="@+id/grid_button"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:textOn="Grid"
-            android:textOff="Grid"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:background="@drawable/mode_button_background"
+            android:src="@drawable/ic_grid"
             />
-        <Button
+        <ImageButton
             android:id="@+id/reset_button"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:text="X"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:background="@drawable/mode_button_background"
+            android:src="@drawable/ic_reset"
             />
     </LinearLayout>
 
