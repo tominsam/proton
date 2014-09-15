@@ -32,6 +32,9 @@ android {
     }
 
     buildTypes {
+        debug {
+            setApplicationIdSuffix('debug')
+        }
         release {
             signingConfig signingConfigs.release
             runProguard false
