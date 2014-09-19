@@ -5,8 +5,12 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.MenuItem;
+
+import java.io.File;
 
 import butterknife.ButterKnife;
 import butterknife.OnClick;
@@ -14,6 +18,7 @@ import butterknife.OnClick;
 
 public class MainActivity extends Activity {
     static int RESULT_LOAD_IMAGE = 9001;
+    private Uri mOutputFileUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,7 +44,11 @@ public class MainActivity extends Activity {
 
     @OnClick(R.id.main_activity_camera)
     void onClickCamera() {
-        startActivityForResult(new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE), RESULT_LOAD_IMAGE);
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        File file = new File(Environment.getExternalStorageDirectory(), "capture.jpg");
+        mOutputFileUri = Uri.fromFile(file);
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, mOutputFileUri);
+        startActivityForResult(intent, RESULT_LOAD_IMAGE);
     }
 
     @OnClick(R.id.main_activity_gallery)
@@ -54,11 +63,16 @@ public class MainActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == RESULT_LOAD_IMAGE) {
             if (resultCode == Activity.RESULT_OK) {
-                Uri selectedImageUri = data.getData();
                 Intent intent = new Intent(this, CorrectionActivity.class);
-                intent.setData(selectedImageUri);
-                Bitmap photo = data.getExtras() == null ? null : (Bitmap) data.getExtras().get("data");
-                intent.putExtra("data", photo);
+                if (data != null) {
+                    Uri selectedImageUri = data.getData();
+                    intent.setData(selectedImageUri);
+                    Bitmap photo = data.getExtras() == null ? null : (Bitmap) data.getExtras().get("data");
+                    intent.putExtra("data", photo);
+                } else {
+                    // null data, so the camera just wrote the file
+                    intent.setData(mOutputFileUri);
+                }
                 startActivity(intent);
             }
 
