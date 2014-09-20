@@ -196,7 +196,6 @@ public class DialControl extends View {
                 mVelocityTracker.addMovement(event);
                 mVelocityTracker.computeCurrentVelocity(1000);
                 mVelocity = mVelocityTracker.getXVelocity();
-                ELog.i(TAG, "xvel is " + mVelocity);
                 float x = event.getX();
                 float change = x - mTouchStartX;
                 mDragOffset = mTouchStartDragOffset + (int)change;
@@ -261,7 +260,6 @@ public class DialControl extends View {
             mValueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
                 public void onAnimationUpdate(ValueAnimator animation) {
-                    ELog.i(TAG, "value is " + animation.getAnimatedValue());
                     mDragOffset = (Float) animation.getAnimatedValue();
                     invalidate();
                     broadcastValue();

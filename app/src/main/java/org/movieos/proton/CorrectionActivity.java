@@ -76,14 +76,13 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
 
         // start paths:
         // (a) opened with URI (MainActivity document picker)
-        // (b) Opened with bitmap in data (MainActivity camera)
+        // (b) (legacy/gone) Opened with bitmap in data (MainActivity camera)
         // (c) Opened with share intent
-
 
         // look for raw bitmap in data (TODO anything still use this?)
         mSource = getIntent().getExtras() == null ? null : (Bitmap) getIntent().getExtras().get("data");
 
-        // MainActivity document picker / camera
+        // MainActivity document picker / camera written data to file on disk
         Uri selectedImageUri = getIntent().getData();
         if (selectedImageUri != null) {
             try {
@@ -93,7 +92,7 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
             }
         }
 
-        // mime type share - share intent
+        // mime type share - share intent from other app
         if (TextUtils.equals(getIntent().getAction(), Intent.ACTION_SEND) && getIntent().getType() != null) {
             Uri send = getIntent().getParcelableExtra(Intent.EXTRA_STREAM);
             try {
@@ -267,7 +266,6 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
 
             if (mLatitude != 0 && mLongitude != 0) {
                 ExifInterface exif = new ExifInterface(file.getAbsolutePath());
-                ELog.i(TAG, "writing " + String.valueOf(mLatitude) + " / " + String.valueOf(mLongitude));
                 exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE, gpsToString(mLatitude));
                 exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE_REF, mLatitude > 0 ? "N" : "S");
                 exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE, gpsToString(mLongitude));
@@ -366,7 +364,6 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
         if (exif.getLatLong(latlng)) {
             mLatitude = latlng[0];
             mLongitude = latlng[1];
-            ELog.i(TAG, "latlng is " + mLatitude + "/" + mLongitude);
         }
 
         // respect EXIF rotation
