@@ -22,7 +22,6 @@ import android.widget.Toast;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -80,69 +79,27 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
         // (b) Opened with bitmap in data (MainActivity camera)
         // (c) Opened with share intent
 
-        Uri selectedImageUri = getIntent().getData();
 
-        // bitmap in data
+        // look for raw bitmap in data (TODO anything still use this?)
         mSource = getIntent().getExtras() == null ? null : (Bitmap) getIntent().getExtras().get("data");
 
+        // MainActivity document picker / camera
+        Uri selectedImageUri = getIntent().getData();
         if (selectedImageUri != null) {
-            // MainActivity document picker
             try {
-                // pull the stream into a file so I can read the EXIF off it
-                InputStream inputStream = getContentResolver().openInputStream(selectedImageUri);
-                File temp = getTempFile();
-                OutputStream stream = new BufferedOutputStream(new FileOutputStream(temp));
-                int bufferSize = 1024;
-                byte[] buffer = new byte[bufferSize];
-                for (int len=0; len != -1; len = inputStream.read(buffer)) {
-                    stream.write(buffer, 0, len);
-                }
-                stream.close();
-
-                // read jpeg
-                mSource = BitmapFactory.decodeFile(temp.getAbsolutePath());
-
-                // read exif
-                ExifInterface exif = new ExifInterface(temp.getAbsolutePath());
-                float[] latlng = new float[]{0, 0};
-                if (exif.getLatLong(latlng)) {
-                    mLatitude = latlng[0];
-                    mLongitude = latlng[1];
-                    ELog.i(TAG, "latlng is " + mLatitude + "/" + mLongitude);
-                }
-
-                // respect EXIF rotation
-                Matrix matrix = new Matrix();
-                switch (exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 0)) {
-                    case ExifInterface.ORIENTATION_NORMAL:
-                        break;
-                    case ExifInterface.ORIENTATION_ROTATE_90:
-                        matrix.postRotate(90);
-                        break;
-                    case ExifInterface.ORIENTATION_ROTATE_180:
-                        matrix.postRotate(180);
-                        break;
-                    case ExifInterface.ORIENTATION_ROTATE_270:
-                        matrix.postRotate(270);
-                        break;
-                }
-                mSource = Bitmap.createBitmap(mSource, 0, 0, mSource.getWidth(), mSource.getHeight(), matrix, false);
-
-            } catch (FileNotFoundException e) {
-                ELog.e(TAG, "error", e);
+                buildSourceFromContentUri(selectedImageUri);
             } catch (IOException e) {
                 ELog.e(TAG, "java.io.IOException", e);
             }
         }
 
+        // mime type share - share intent
         if (TextUtils.equals(getIntent().getAction(), Intent.ACTION_SEND) && getIntent().getType() != null) {
-            // mime type share - share intent
             Uri send = getIntent().getParcelableExtra(Intent.EXTRA_STREAM);
             try {
-                InputStream inputStream = getContentResolver().openInputStream(send);
-                mSource = BitmapFactory.decodeStream(inputStream);
-            } catch (FileNotFoundException e) {
-                ELog.e(TAG, "error", e);
+                buildSourceFromContentUri(send);
+            } catch (IOException e) {
+                ELog.e(TAG, "java.io.IOException", e);
             }
         }
 
@@ -388,4 +345,45 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
         return sb.toString();
     }
 
+    private void buildSourceFromContentUri(Uri selectedImageUri) throws IOException {
+        // pull the stream into a file so I can read the EXIF off it
+        InputStream inputStream = getContentResolver().openInputStream(selectedImageUri);
+        File temp = getTempFile();
+        OutputStream stream = new BufferedOutputStream(new FileOutputStream(temp));
+        int bufferSize = 1024;
+        byte[] buffer = new byte[bufferSize];
+        for (int len=0; len != -1; len = inputStream.read(buffer)) {
+            stream.write(buffer, 0, len);
+        }
+        stream.close();
+
+        // read jpeg
+        Bitmap bitmap = BitmapFactory.decodeFile(temp.getAbsolutePath());
+
+        // read exif
+        ExifInterface exif = new ExifInterface(temp.getAbsolutePath());
+        float[] latlng = new float[]{0, 0};
+        if (exif.getLatLong(latlng)) {
+            mLatitude = latlng[0];
+            mLongitude = latlng[1];
+            ELog.i(TAG, "latlng is " + mLatitude + "/" + mLongitude);
+        }
+
+        // respect EXIF rotation
+        Matrix matrix = new Matrix();
+        switch (exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 0)) {
+            case ExifInterface.ORIENTATION_NORMAL:
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_90:
+                matrix.postRotate(90);
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_180:
+                matrix.postRotate(180);
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_270:
+                matrix.postRotate(270);
+                break;
+        }
+        mSource = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, false);
+    }
 }
