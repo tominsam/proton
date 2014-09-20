@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -19,11 +20,13 @@ import android.widget.ImageView;
 import android.widget.ShareActionProvider;
 import android.widget.Toast;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -63,6 +66,8 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
     CorrectionManager mCorrection;
     Mode mMode = Mode.ROTATE;
     private ShareActionProvider mShareActionProvider;
+    float mLatitude;
+    float mLongitude;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,10 +88,50 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
         if (selectedImageUri != null) {
             // MainActivity document picker
             try {
+                // pull the stream into a file so I can read the EXIF off it
                 InputStream inputStream = getContentResolver().openInputStream(selectedImageUri);
-                mSource = BitmapFactory.decodeStream(inputStream);
+                File temp = getTempFile();
+                OutputStream stream = new BufferedOutputStream(new FileOutputStream(temp));
+                int bufferSize = 1024;
+                byte[] buffer = new byte[bufferSize];
+                for (int len=0; len != -1; len = inputStream.read(buffer)) {
+                    stream.write(buffer, 0, len);
+                }
+                stream.close();
+
+                // read jpeg
+                mSource = BitmapFactory.decodeFile(temp.getAbsolutePath());
+
+                // read exif
+                ExifInterface exif = new ExifInterface(temp.getAbsolutePath());
+                float[] latlng = new float[]{0, 0};
+                if (exif.getLatLong(latlng)) {
+                    mLatitude = latlng[0];
+                    mLongitude = latlng[1];
+                    ELog.i(TAG, "latlng is " + mLatitude + "/" + mLongitude);
+                }
+
+                // respect EXIF rotation
+                Matrix matrix = new Matrix();
+                switch (exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 0)) {
+                    case ExifInterface.ORIENTATION_NORMAL:
+                        break;
+                    case ExifInterface.ORIENTATION_ROTATE_90:
+                        matrix.postRotate(90);
+                        break;
+                    case ExifInterface.ORIENTATION_ROTATE_180:
+                        matrix.postRotate(180);
+                        break;
+                    case ExifInterface.ORIENTATION_ROTATE_270:
+                        matrix.postRotate(270);
+                        break;
+                }
+                mSource = Bitmap.createBitmap(mSource, 0, 0, mSource.getWidth(), mSource.getHeight(), matrix, false);
+
             } catch (FileNotFoundException e) {
                 ELog.e(TAG, "error", e);
+            } catch (IOException e) {
+                ELog.e(TAG, "java.io.IOException", e);
             }
         }
 
@@ -262,6 +307,17 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
             FileOutputStream stream = new FileOutputStream(file);
             output.compress(Bitmap.CompressFormat.JPEG, 80, stream);
             stream.close();
+
+            if (mLatitude != 0 && mLongitude != 0) {
+                ExifInterface exif = new ExifInterface(file.getAbsolutePath());
+                ELog.i(TAG, "writing " + String.valueOf(mLatitude) + " / " + String.valueOf(mLongitude));
+                exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE, gpsToString(mLatitude));
+                exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE_REF, mLatitude > 0 ? "N" : "S");
+                exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE, gpsToString(mLongitude));
+                exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE_REF, mLongitude > 0 ? "E" : "W");
+                exif.saveAttributes();
+            }
+
         } catch (IOException e) {
             ELog.e(TAG, "java.io.IOException", e);
             Toast.makeText(this, R.string.write_error, Toast.LENGTH_LONG).show();
@@ -287,14 +343,7 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
         if (ALWAYS_SAVE) {
             saved = save();
         } else {
-            File folder = new File(getExternalFilesDir("share"), "temp");
-            folder.mkdirs();
-            // cleaning up after share is hard, we'll clean up before share
-            // which is 90% as good and way easier to follow.
-            for (String filename : folder.list()) {
-                new File(folder, filename).delete();
-            }
-            saved = new File(folder, filename());
+            saved = getTempFile();
             writeToFile(saved);
         }
 
@@ -304,4 +353,39 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
         intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(saved));
         startActivity(Intent.createChooser(intent, getString(R.string.share_title)));
     }
+
+    private File getTempFile() {
+        File saved;
+        File folder = new File(getExternalFilesDir("share"), "temp");
+        folder.mkdirs();
+        // cleaning up after share is hard, we'll clean up before share
+        // which is 90% as good and way easier to follow.
+        for (String filename : folder.list()) {
+            new File(folder, filename).delete();
+        }
+        saved = new File(folder, filename());
+        return saved;
+    }
+
+    private String gpsToString(double latitude) {
+        latitude=Math.abs(latitude);
+        int degree = (int) latitude;
+        latitude *= 60;
+        latitude -= (degree * 60.0d);
+        int minute = (int) latitude;
+        latitude *= 60;
+        latitude -= (minute * 60.0d);
+        int second = (int) (latitude*1000.0d);
+
+        StringBuilder sb = new StringBuilder(20);
+        sb.setLength(0);
+        sb.append(degree);
+        sb.append("/1,");
+        sb.append(minute);
+        sb.append("/1,");
+        sb.append(second);
+        sb.append("/1000,");
+        return sb.toString();
+    }
+
 }
