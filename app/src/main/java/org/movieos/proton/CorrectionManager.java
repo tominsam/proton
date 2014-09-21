@@ -4,13 +4,16 @@ import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 
+import org.parceler.Parcel;
+
+@Parcel
 public class CorrectionManager {
     private transient static final String TAG = CorrectionManager.class.getSimpleName();
 
-    private double mRotation;
-    private double mVerticalSkew;
-    private double mHorizontalSkew;
-    private boolean mCrop;
+    double mRotation;
+    double mVerticalSkew;
+    double mHorizontalSkew;
+    boolean mCrop;
 
     public Matrix getMatrix(Bitmap source) {
         Matrix matrix = new Matrix();

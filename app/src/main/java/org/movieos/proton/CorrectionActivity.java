@@ -64,7 +64,6 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
     Bitmap mBitmap;
     CorrectionManager mCorrection;
     Mode mMode = Mode.ROTATE;
-    private ShareActionProvider mShareActionProvider;
     float mLatitude;
     float mLongitude;
 
