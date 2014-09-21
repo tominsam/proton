@@ -15,9 +15,9 @@ import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.ShareActionProvider;
 import android.widget.Toast;
 
 import java.io.BufferedOutputStream;
@@ -43,6 +43,9 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
     enum Mode {
         ROTATE, VERTICAL_SKEW, HORIZONTAL_SKEW
     };
+
+    @InjectView(R.id.frame)
+    FrameLayout mImageFrame;
 
     @InjectView(R.id.image)
     ImageView mImageView;
@@ -108,8 +111,7 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
 
         // Create scaled bitmap the size of the screen. This is probably
         // cheaper than matrixing a huge jpeg.
-
-        mImageView.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+        mImageFrame.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
             @Override
             public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
                 float width = right - left;
@@ -212,7 +214,7 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
     private void updateImage() {
         if (mBitmap != null) {
             Matrix matrix = mCorrection.getMatrix(mBitmap);
-            ELog.i(TAG, "transformation matrix is " + matrix.toString());
+            //ELog.i(TAG, "transformation matrix is " + matrix.toString());
             // center the image in the view
             int xdiff = mImageView.getWidth() - mBitmap.getWidth();
             int ydiff = mImageView.getHeight() - mBitmap.getHeight();
