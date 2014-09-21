@@ -65,9 +65,11 @@ public class DialControl extends View {
 //        mBackground = new Paint();
 //        mBackground.setColor(getResources().getColor(R.color.dial_background));
 
+        float density = getContext().getResources().getDisplayMetrics().density;
+
         mMajor = new Paint();
         mMajor.setColor(getResources().getColor(R.color.dial_major));
-        mMajor.setStrokeWidth(1);
+        mMajor.setStrokeWidth(density);
 
         mNumbers = new Paint();
         mNumbers.setColor(getResources().getColor(R.color.dial_major));
@@ -76,11 +78,11 @@ public class DialControl extends View {
         mNumbers.setAntiAlias(true);
 
         mMinor = new Paint();
-        mMinor.setStrokeWidth(1);
+        mMinor.setStrokeWidth(density);
         mMinor.setColor(getResources().getColor(R.color.dial_minor));
 
         mCursor = new Paint();
-        mCursor.setStrokeWidth(1);
+        mCursor.setStrokeWidth(density);
         mCursor.setColor(getResources().getColor(R.color.dial_cursor));
 
         mOverScroller = new OverScroller(getContext());
