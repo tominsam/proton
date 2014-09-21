@@ -2,13 +2,15 @@ package org.movieos.proton;
 
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
+import android.graphics.RectF;
 
 public class CorrectionManager {
     private transient static final String TAG = CorrectionManager.class.getSimpleName();
 
     private double mRotation;
     private double mVerticalSkew;
-    private double mHorizontalSkew; // TODO
+    private double mHorizontalSkew;
+    private boolean mCrop;
 
     public Matrix getMatrix(Bitmap source) {
         Matrix matrix = new Matrix();
@@ -54,9 +56,31 @@ public class CorrectionManager {
         // rotate and scale the image to avoid write corners. Math
         // here is wrong, but almost right, I'll deal with this when I care more.
         matrix.postRotate((float) mRotation, source.getWidth() / 2, source.getHeight() / 2);
-        double cos = Math.abs(Math.sin(Math.toRadians(mRotation) * 2));
-        double scale = cos * (Math.sqrt(2) - 1) + 1;
-        matrix.postScale((float)scale, (float)scale, source.getWidth() / 2, source.getHeight() / 2);
+
+        if (mCrop) {
+            double cos = Math.abs(Math.sin(Math.toRadians(mRotation) * 2));
+            double scale = cos * (Math.sqrt(2) - 1) + 1;
+            ELog.i(TAG, "scale is " + scale);
+            matrix.postScale((float) scale, (float) scale, source.getWidth() / 2, source.getHeight() / 2);
+        } else {
+            // work out a bounding rectangle for the transformed poly, then
+            // apply a transform that will shrink that poly to the bounds of
+            // the rectangle. Thus the complete output poly is now visible in
+            // the bounds of the view.
+            float[] output = new float[8];
+            matrix.mapPoints(output, bounds);
+            Matrix shrink = new Matrix();
+            RectF start = new RectF(0, 0, source.getWidth(), source.getHeight());
+            RectF end = new RectF(
+                    Math.min(Math.min(output[0], output[2]), Math.min(output[4], output[6])),
+                    Math.min(Math.min(output[1], output[3]), Math.min(output[5], output[7])),
+                    Math.max(Math.max(output[0], output[2]), Math.max(output[4], output[6])),
+                    Math.max(Math.max(output[1], output[3]), Math.max(output[5], output[7]))
+            );
+            shrink.setRectToRect(start, end, Matrix.ScaleToFit.FILL);
+            shrink.invert(shrink);
+            matrix.postConcat(shrink);
+        }
 
         return matrix;
     }
@@ -84,5 +108,13 @@ public class CorrectionManager {
 
     public void setHorizontalSkew(double horizontalSkew) {
         mHorizontalSkew = horizontalSkew;
+    }
+
+    public boolean isCrop() {
+        return mCrop;
+    }
+
+    public void setCrop(boolean crop) {
+        mCrop = crop;
     }
 }

@@ -190,6 +190,13 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
         mDial.setValue(0, true);
     }
 
+    @OnClick(R.id.crop_button)
+    void onCrop(ImageButton b) {
+        b.setActivated(!b.isActivated());
+        mCorrection.setCrop(b.isActivated());
+        updateImage();
+    }
+
     @OnClick(R.id.grid_button)
     void onGrid(ImageButton b) {
         b.setActivated(!b.isActivated());
@@ -206,6 +213,7 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
     private void updateImage() {
         if (mBitmap != null) {
             Matrix matrix = mCorrection.getMatrix(mBitmap);
+            ELog.i(TAG, "transformation matrix is " + matrix.toString());
             // center the image in the view
             int xdiff = mImageView.getWidth() - mBitmap.getWidth();
             int ydiff = mImageView.getHeight() - mBitmap.getHeight();
