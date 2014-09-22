@@ -62,30 +62,35 @@ public class CorrectionManager {
         // fits entirely inside our new poly. If not mCrop, we'll return the smallest
         // rectangle of the same aspect that entirely encloses the target poly.
         RectF start = new RectF(0, 0, source.getWidth(), source.getHeight());
-        RectF end;
         float[] targetPoly = new float[8];
         matrix.mapPoints(targetPoly, bounds);
+        // bounding rectangle
+        RectF boundsRect = new RectF(
+                Math.min(Math.min(targetPoly[0], targetPoly[2]), Math.min(targetPoly[4], targetPoly[6])),
+                Math.min(Math.min(targetPoly[1], targetPoly[3]), Math.min(targetPoly[5], targetPoly[7])),
+                Math.max(Math.max(targetPoly[0], targetPoly[2]), Math.max(targetPoly[4], targetPoly[6])),
+                Math.max(Math.max(targetPoly[1], targetPoly[3]), Math.max(targetPoly[5], targetPoly[7]))
+        );
 
         if (mCrop) {
-            end = new RectF(start);
+            // this is wrong. We're just scaling to hide corners from rotation
+            // We should find largest fitting rectangle inpoly but ow my brain.
+            double cos = Math.abs(Math.sin(Math.toRadians(mRotation) * 2));
+            double scale = cos * (Math.sqrt(2) - 1) + 1;
+            ELog.i(TAG, "scale is " + scale);
+            matrix.postScale((float) scale, (float) scale, source.getWidth() / 2, source.getHeight() / 2);
         } else {
-            // bounding rectangle
-            RectF boundsRect = new RectF(
-                    Math.min(Math.min(targetPoly[0], targetPoly[2]), Math.min(targetPoly[4], targetPoly[6])),
-                    Math.min(Math.min(targetPoly[1], targetPoly[3]), Math.min(targetPoly[5], targetPoly[7])),
-                    Math.max(Math.max(targetPoly[0], targetPoly[2]), Math.max(targetPoly[4], targetPoly[6])),
-                    Math.max(Math.max(targetPoly[1], targetPoly[3]), Math.max(targetPoly[5], targetPoly[7]))
-            );
+            // build the aspect-correct rectangle that has the bounding rectangle at its center
             float scale = Math.max(boundsRect.width() / start.width(), boundsRect.height() / start.height());
-            end = new RectF(0, 0, scale * start.width(), scale * start.height());
+            RectF end = new RectF(0, 0, scale * start.width(), scale * start.height());
             end.offsetTo(boundsRect.left, boundsRect.top);
             end.offset((boundsRect.width() - end.width()) / 2, (boundsRect.height() - end.height()) / 2);
+            Matrix shrink = new Matrix();
+            shrink.setRectToRect(start, end, Matrix.ScaleToFit.FILL);
+            shrink.invert(shrink);
+            matrix.postConcat(shrink);
         }
 
-        Matrix shrink = new Matrix();
-        shrink.setRectToRect(start, end, Matrix.ScaleToFit.FILL);
-        shrink.invert(shrink);
-        matrix.postConcat(shrink);
         return matrix;
     }
 
