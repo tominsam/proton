@@ -54,37 +54,38 @@ public class CorrectionManager {
             dest[6] -= vskew;
             dest[7] -= vskew;
         }
-        matrix.setPolyToPoly(bounds, 0, dest, 0, 4);
 
-        // rotate and scale the image to avoid write corners. Math
-        // here is wrong, but almost right, I'll deal with this when I care more.
-        matrix.postRotate((float) mRotation, source.getWidth() / 2, source.getHeight() / 2);
+        matrix.setPolyToPoly(bounds, 0, dest, 0, 4);
+        matrix.preRotate((float) mRotation, source.getWidth() / 2, source.getHeight() / 2);
+
+        // if mCrop, we want the largest image of the same aspect as the original that
+        // fits entirely inside our new poly. If not mCrop, we'll return the smallest
+        // rectangle of the same aspect that entirely encloses the target poly.
+        RectF start = new RectF(0, 0, source.getWidth(), source.getHeight());
+        RectF end;
+        float[] targetPoly = new float[8];
+        matrix.mapPoints(targetPoly, bounds);
 
         if (mCrop) {
-            double cos = Math.abs(Math.sin(Math.toRadians(mRotation) * 2));
-            double scale = cos * (Math.sqrt(2) - 1) + 1;
-            ELog.i(TAG, "scale is " + scale);
-            matrix.postScale((float) scale, (float) scale, source.getWidth() / 2, source.getHeight() / 2);
+            end = new RectF(start);
         } else {
-            // work out a bounding rectangle for the transformed poly, then
-            // apply a transform that will shrink that poly to the bounds of
-            // the rectangle. Thus the complete output poly is now visible in
-            // the bounds of the view.
-            float[] output = new float[8];
-            matrix.mapPoints(output, bounds);
-            Matrix shrink = new Matrix();
-            RectF start = new RectF(0, 0, source.getWidth(), source.getHeight());
-            RectF end = new RectF(
-                    Math.min(Math.min(output[0], output[2]), Math.min(output[4], output[6])),
-                    Math.min(Math.min(output[1], output[3]), Math.min(output[5], output[7])),
-                    Math.max(Math.max(output[0], output[2]), Math.max(output[4], output[6])),
-                    Math.max(Math.max(output[1], output[3]), Math.max(output[5], output[7]))
+            // bounding rectangle
+            RectF boundsRect = new RectF(
+                    Math.min(Math.min(targetPoly[0], targetPoly[2]), Math.min(targetPoly[4], targetPoly[6])),
+                    Math.min(Math.min(targetPoly[1], targetPoly[3]), Math.min(targetPoly[5], targetPoly[7])),
+                    Math.max(Math.max(targetPoly[0], targetPoly[2]), Math.max(targetPoly[4], targetPoly[6])),
+                    Math.max(Math.max(targetPoly[1], targetPoly[3]), Math.max(targetPoly[5], targetPoly[7]))
             );
-            shrink.setRectToRect(start, end, Matrix.ScaleToFit.FILL);
-            shrink.invert(shrink);
-            matrix.postConcat(shrink);
+            float scale = Math.max(boundsRect.width() / start.width(), boundsRect.height() / start.height());
+            end = new RectF(0, 0, scale * start.width(), scale * start.height());
+            end.offsetTo(boundsRect.left, boundsRect.top);
+            end.offset((boundsRect.width() - end.width()) / 2, (boundsRect.height() - end.height()) / 2);
         }
 
+        Matrix shrink = new Matrix();
+        shrink.setRectToRect(start, end, Matrix.ScaleToFit.FILL);
+        shrink.invert(shrink);
+        matrix.postConcat(shrink);
         return matrix;
     }
 
