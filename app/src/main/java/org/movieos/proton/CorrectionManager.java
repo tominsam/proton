@@ -10,13 +10,21 @@ import org.parceler.Parcel;
 public class CorrectionManager {
     private transient static final String TAG = CorrectionManager.class.getSimpleName();
 
-    double mRotation;
-    double mVerticalSkew;
-    double mHorizontalSkew;
-    boolean mCrop;
+    double mRotation = 0;
+    double mVerticalSkew = 0;
+    double mHorizontalSkew = 0;
+    boolean mCrop = true;
+
+    @Override
+    public String toString() {
+        return String.format("CorrectionManager{%f %f %f %s}", mRotation, mHorizontalSkew, mVerticalSkew, mCrop ? "cropped" : "not cropped");
+    }
 
     public Matrix getMatrix(Bitmap source) {
         Matrix matrix = new Matrix();
+        if (source == null) {
+            return matrix;
+        }
 
         float hskew = (float) (mHorizontalSkew * source.getWidth() * 0.02f);
         float vskew = (float) (mVerticalSkew * source.getWidth() * 0.02f);
@@ -77,7 +85,6 @@ public class CorrectionManager {
             // We should find largest fitting rectangle inpoly but ow my brain.
             double cos = Math.abs(Math.sin(Math.toRadians(mRotation) * 2));
             double scale = cos * (Math.sqrt(2) - 1) + 1;
-            ELog.i(TAG, "scale is " + scale);
             matrix.postScale((float) scale, (float) scale, source.getWidth() / 2, source.getHeight() / 2);
         } else {
             // build the aspect-correct rectangle that has the bounding rectangle at its center

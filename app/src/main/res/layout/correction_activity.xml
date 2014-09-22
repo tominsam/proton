@@ -22,6 +22,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:background="#FF999999"
+            android:scaleType="matrix"
             />
 
         <org.movieos.proton.GridOverlay

@@ -11,6 +11,7 @@ import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -19,6 +20,8 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
+
+import org.parceler.Parcels;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -51,10 +54,25 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
     ImageView mImageView;
 
     @InjectView(R.id.grid)
-    GridOverlay mGrid;
+    GridOverlay mGridOverlay;
 
     @InjectView(R.id.dial)
-    DialControl mDial;
+    DialControl mDialControl;
+
+    @InjectView(R.id.rotate_button)
+    ImageButton mRotateButton;
+
+    @InjectView(R.id.horizontal_skew_button)
+    ImageButton mHskewButton;
+
+    @InjectView(R.id.vertical_skew_button)
+    ImageButton mVskewButton;
+
+    @InjectView(R.id.crop_button)
+    ImageButton mCropButton;
+
+    @InjectView(R.id.grid_button)
+    ImageButton mGridButton;
 
     @InjectViews({
             R.id.rotate_button,
@@ -63,12 +81,17 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
     })
     List<ImageButton> mButtons;
 
+    // derived from launch state
     Bitmap mSource;
-    Bitmap mBitmap;
+    Bitmap mPreview;
+    float mOriginalLatitude;
+    float mOrigainlLongitude;
+
+    // view state
     CorrectionManager mCorrection;
     Mode mMode = Mode.ROTATE;
-    float mLatitude;
-    float mLongitude;
+    boolean mGrid;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -117,30 +140,41 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
                 float width = right - left;
                 float height = bottom - top;
                 float scale = Math.min(width / mSource.getWidth(), height / mSource.getHeight());
-                ELog.i(TAG, "layout changed scale now " + scale);
-                mBitmap = Bitmap.createScaledBitmap(mSource, (int) (mSource.getWidth() * scale), (int) (mSource.getHeight() * scale), true);
-                ELog.i(TAG, String.format("view is %s by %s and image is %s by %s", width, height, mBitmap.getWidth(), mBitmap.getHeight()));
-                mImageView.setImageBitmap(mBitmap);
+                ELog.i(TAG, "preview scale is " + scale);
+                mPreview = Bitmap.createScaledBitmap(mSource, (int) (mSource.getWidth() * scale), (int) (mSource.getHeight() * scale), true);
+                mImageView.setImageBitmap(mPreview);
+                updateControls();
                 updateImage();
             }
         });
 
-        mCorrection = new CorrectionManager();
-        updateControls();
-        activate((ImageButton)findViewById(R.id.rotate_button));
+        mDialControl.setOnChangeListener(this);
 
-        mImageView.setScaleType(ImageView.ScaleType.MATRIX);
-        // temporary bitmap to force scaling
-        mImageView.setImageBitmap(mSource);
+        if (savedInstanceState != null) {
+            mCorrection = Parcels.unwrap(savedInstanceState.getParcelable("correction"));
+            mGrid = savedInstanceState.getBoolean("grid");
+            mMode = Mode.valueOf(savedInstanceState.getString("mode"));
+        }
 
-        mGrid.setVisibility(View.INVISIBLE);
+        if (mCorrection == null) {
+            mCorrection = new CorrectionManager();
+        }
 
-        mDial.setOnChangeListener(this);
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable("correction", Parcels.wrap(mCorrection));
+        outState.putBoolean("grid", mGrid);
+        outState.putString("mode", mMode.toString());
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        ELog.i(TAG, "Correction Manager is " + mCorrection);
+        updateControls();
         updateImage();
     }
 
@@ -151,7 +185,7 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
     }
 
     @Override
-    public boolean onMenuItemSelected(int featureId, MenuItem item) {
+    public boolean onMenuItemSelected(int featureId, @NonNull MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_save:
                 save();
@@ -169,39 +203,36 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
     void onRotate(ImageButton v) {
         mMode = Mode.ROTATE;
         updateControls();
-        activate(v);
     }
 
     @OnClick(R.id.vertical_skew_button)
     void onVertical(ImageButton v) {
         mMode = Mode.VERTICAL_SKEW;
         updateControls();
-        activate(v);
     }
 
     @OnClick(R.id.horizontal_skew_button)
     void onHorizontal(ImageButton v) {
         mMode = Mode.HORIZONTAL_SKEW;
         updateControls();
-        activate(v);
     }
 
     @OnClick(R.id.reset_button)
     void onReset() {
-        mDial.setValue(0, true);
+        mDialControl.setValue(0, true);
     }
 
     @OnClick(R.id.crop_button)
     void onCrop(ImageButton b) {
-        b.setActivated(!b.isActivated());
-        mCorrection.setCrop(b.isActivated());
+        mCorrection.setCrop(!b.isActivated());
+        updateControls();
         updateImage();
     }
 
     @OnClick(R.id.grid_button)
     void onGrid(ImageButton b) {
-        b.setActivated(!b.isActivated());
-        mGrid.setVisibility(b.isActivated() ? View.VISIBLE : View.INVISIBLE);
+        mGrid = !b.isActivated();
+        updateControls();
     }
 
     void activate(ImageButton v) {
@@ -212,34 +243,36 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
     }
 
     private void updateImage() {
-        if (mBitmap != null) {
-            Matrix matrix = mCorrection.getMatrix(mBitmap);
-            //ELog.i(TAG, "transformation matrix is " + matrix.toString());
-            // center the image in the view
-            int xdiff = mImageView.getWidth() - mBitmap.getWidth();
-            int ydiff = mImageView.getHeight() - mBitmap.getHeight();
-            matrix.postTranslate(xdiff / 2, ydiff / 2);
-            mImageView.setImageMatrix(matrix);
-        }
+        Matrix matrix = mCorrection.getMatrix(mPreview);
+        mImageView.setScaleType(ImageView.ScaleType.MATRIX);
+        mImageView.setImageMatrix(matrix);
     }
 
     private void updateControls() {
         switch (mMode) {
             case ROTATE:
-                mDial.setValue(mCorrection.getRotation(), 45, 0.1, 10);
+                activate(mRotateButton);
+                mDialControl.setValue(mCorrection.getRotation(), 45, 0.1, 10);
                 break;
             case VERTICAL_SKEW:
-                mDial.setValue(mCorrection.getVerticalSkew(), 40, 0.1, 10);
+                activate(mVskewButton);
+                mDialControl.setValue(mCorrection.getVerticalSkew(), 40, 0.1, 10);
                 break;
             case HORIZONTAL_SKEW:
-                mDial.setValue(mCorrection.getHorizontalSkew(), 40, 0.1, 10);
+                activate(mHskewButton);
+                mDialControl.setValue(mCorrection.getHorizontalSkew(), 40, 0.1, 10);
                 break;
         }
+        mGridOverlay.setVisibility(mGrid ? View.VISIBLE : View.INVISIBLE);
+        mGridButton.setActivated(mGrid);
+        mCropButton.setActivated(mCorrection.isCrop());
     }
-
 
     @Override
     public void onDialValueChanged(double value) {
+        if (Double.isNaN(value)) {
+            return;
+        }
         switch (mMode) {
             case ROTATE:
                 mCorrection.setRotation(value);
@@ -273,12 +306,12 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
             output.compress(Bitmap.CompressFormat.JPEG, 80, stream);
             stream.close();
 
-            if (mLatitude != 0 && mLongitude != 0) {
+            if (mOriginalLatitude != 0 && mOrigainlLongitude != 0) {
                 ExifInterface exif = new ExifInterface(file.getAbsolutePath());
-                exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE, gpsToString(mLatitude));
-                exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE_REF, mLatitude > 0 ? "N" : "S");
-                exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE, gpsToString(mLongitude));
-                exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE_REF, mLongitude > 0 ? "E" : "W");
+                exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE, gpsToString(mOriginalLatitude));
+                exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE_REF, mOriginalLatitude > 0 ? "N" : "S");
+                exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE, gpsToString(mOrigainlLongitude));
+                exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE_REF, mOrigainlLongitude > 0 ? "E" : "W");
                 exif.saveAttributes();
             }
 
@@ -371,8 +404,8 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
         ExifInterface exif = new ExifInterface(temp.getAbsolutePath());
         float[] latlng = new float[]{0, 0};
         if (exif.getLatLong(latlng)) {
-            mLatitude = latlng[0];
-            mLongitude = latlng[1];
+            mOriginalLatitude = latlng[0];
+            mOrigainlLongitude = latlng[1];
         }
 
         // respect EXIF rotation

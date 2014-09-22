@@ -253,6 +253,7 @@ public class DialControl extends View {
     public void setValue(double value, boolean animate) {
         mOverScroller.forceFinished(true);
         double target = -valueToPixel(value);
+        ELog.i(TAG, "target is " + target + " from " + value);
         if (animate) {
             if (mValueAnimator != null) {
                 mValueAnimator.cancel();
