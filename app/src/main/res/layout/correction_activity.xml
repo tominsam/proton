@@ -72,14 +72,14 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:background="@drawable/mode_button_background"
-            android:src="@drawable/ic_crop"
+            android:src="@drawable/crop_button"
             />
         <ImageButton
             android:id="@+id/grid_button"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:background="@drawable/mode_button_background"
-            android:src="@drawable/ic_grid"
+            android:src="@drawable/grid_button"
             />
         <ImageButton
             android:id="@+id/reset_button"
