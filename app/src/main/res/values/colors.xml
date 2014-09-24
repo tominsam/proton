@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- http://www.colourlovers.com/palette/1041410/undecided -->
     <color name="dark_background">#FF563444</color>
     <color name="dark_foreground">#FF6A5E72</color>
     <color name="light_background">#FFDAD6CA</color>
@@ -9,7 +10,6 @@
     <color name="window_background">@color/light_background</color>
     <color name="grid_color">@color/hilight</color>
 
-    <!--<color name="dial_background">@color/dark_background</color>-->
     <color name="dial_major">#FF000000</color>
     <color name="dial_cursor">@color/hilight</color>
     <color name="dial_minor">#FF999999</color>
