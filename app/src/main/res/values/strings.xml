@@ -10,5 +10,9 @@
     <string name="read_error">Error reading image</string>
     <string name="camera">Camera</string>
     <string name="gallery">Gallery</string>
+    <string name="action_about">About</string>
+    <string name="about1">I should write something here really. Not sure what,\u00A0though.</string>
+    <string name="about2">I should write something here really. Not sure what,\u00A0though.</string>
+    <string name="attribution1">App icon based on Polygon by Yohan\u00A0Boniface.</string>
 
 </resources>

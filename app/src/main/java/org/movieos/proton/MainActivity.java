@@ -1,5 +1,6 @@
 package org.movieos.proton;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -7,6 +8,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.view.Menu;
+import android.view.MenuItem;
 
 import java.io.File;
 
@@ -15,6 +18,8 @@ import butterknife.OnClick;
 
 
 public class MainActivity extends Activity {
+    private transient static final String TAG = MainActivity.class.getSimpleName();
+
     static int RESULT_LOAD_IMAGE = 9001;
     private Uri mOutputFileUri;
 
@@ -26,6 +31,17 @@ public class MainActivity extends Activity {
         }
         setContentView(R.layout.main_activity);
         ButterKnife.inject(this);
+        getActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_TITLE);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    public void showAbout(MenuItem sender) {
+        startActivity(new Intent(this, AboutActivity.class));
     }
 
     @Override

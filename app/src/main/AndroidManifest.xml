@@ -28,6 +28,10 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".AboutActivity">
+        </activity>
+
     </application>
 
 

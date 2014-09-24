@@ -1,5 +1,6 @@
 package org.movieos.proton;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -99,6 +100,9 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
         setContentView(R.layout.correction_activity);
         ButterKnife.inject(this);
 
+        getActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_TITLE);
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+
         // start paths:
         // (a) opened with URI (MainActivity document picker)
         // (b) (legacy/gone) Opened with bitmap in data (MainActivity camera)
@@ -187,6 +191,9 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
     @Override
     public boolean onMenuItemSelected(int featureId, @NonNull MenuItem item) {
         switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
+                return true;
             case R.id.action_save:
                 save();
                 Toast.makeText(this, R.string.save_complete, Toast.LENGTH_LONG).show();
