@@ -1,10 +1,10 @@
 package org.movieos.proton;
 
 import android.app.ActionBar;
-import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
 import android.view.MenuItem;
 import android.webkit.WebView;
 
@@ -12,7 +12,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 
 
-public class AboutActivity extends Activity {
+public class AboutActivity extends ActionBarActivity {
     private transient static final String TAG = AboutActivity.class.getSimpleName();
 
     @Override
@@ -21,16 +21,16 @@ public class AboutActivity extends Activity {
         WebView webView = new WebView(this);
         setContentView(R.layout.about_activity);
         ButterKnife.inject(this);
-        getActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_TITLE);
-        getActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_TITLE);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
 
     @Override
-    public boolean onMenuItemSelected(int featureId, MenuItem item) {
+    public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
             finish();
         }
-        return super.onMenuItemSelected(featureId, item);
+        return super.onOptionsItemSelected(item);
     }
 
     @OnClick(R.id.about_proton)

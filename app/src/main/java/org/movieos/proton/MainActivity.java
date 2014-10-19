@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -17,7 +18,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 
 
-public class MainActivity extends Activity {
+public class MainActivity extends ActionBarActivity {
     private transient static final String TAG = MainActivity.class.getSimpleName();
 
     static int RESULT_LOAD_IMAGE = 9001;
@@ -31,7 +32,7 @@ public class MainActivity extends Activity {
         }
         setContentView(R.layout.main_activity);
         ButterKnife.inject(this);
-        getActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_TITLE);
+        getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_TITLE);
     }
 
     @Override

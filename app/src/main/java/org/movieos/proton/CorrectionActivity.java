@@ -13,6 +13,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
+import android.support.v7.app.ActionBarActivity;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -39,7 +40,7 @@ import butterknife.InjectView;
 import butterknife.InjectViews;
 import butterknife.OnClick;
 
-public class CorrectionActivity extends Activity implements DialControl.OnDialChangeListener {
+public class CorrectionActivity extends ActionBarActivity implements DialControl.OnDialChangeListener {
     private transient static final String TAG = CorrectionActivity.class.getSimpleName();
 
     private static final boolean ALWAYS_SAVE = true; // TODO setting or something
@@ -100,8 +101,8 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
         setContentView(R.layout.correction_activity);
         ButterKnife.inject(this);
 
-        getActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_TITLE);
-        getActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_TITLE);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         // start paths:
         // (a) opened with URI (MainActivity document picker)
@@ -188,8 +189,9 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
         return super.onCreateOptionsMenu(menu);
     }
 
+
     @Override
-    public boolean onMenuItemSelected(int featureId, @NonNull MenuItem item) {
+    public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
                 finish();
@@ -208,7 +210,7 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
                 share();
                 return true;
             default:
-                return super.onMenuItemSelected(featureId, item);
+                return super.onOptionsItemSelected(item);
         }
     }
 
