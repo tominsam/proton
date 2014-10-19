@@ -15,4 +15,7 @@
     <string name="about2">I should write something here really. Not sure what,\u00A0though.</string>
     <string name="attribution1">App icon based on Polygon by Yohan\u00A0Boniface.</string>
 
+    <!-- Name of the album the saved photos get put into. Should be the same as the app name -->
+    <string name="album_name">Proton</string>
+
 </resources>

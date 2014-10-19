@@ -195,8 +195,14 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
                 finish();
                 return true;
             case R.id.action_save:
-                save();
+                File file = save();
                 Toast.makeText(this, R.string.save_complete, Toast.LENGTH_LONG).show();
+                if (getIntent().getAction() != null && getIntent().getAction().equals(Intent.ACTION_EDIT)) {
+                    Intent data = new Intent();
+                    data.setData(Uri.parse("file://" + file.getAbsolutePath()));
+                    setResult(Activity.RESULT_OK, data);
+                    finish();
+                }
                 return true;
             case R.id.action_share:
                 share();
@@ -331,14 +337,14 @@ public class CorrectionActivity extends Activity implements DialControl.OnDialCh
     }
 
     File save() {
-        File album = getAlbumStorageDir(getString(R.string.app_name));
+        File album = getAlbumStorageDir(getString(R.string.album_name));
         File file = new File(album, filename());
         writeToFile(file);
         return file;
     }
 
     String filename() {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss.SSSZ");
         return format.format(new Date()) + ".jpg";
     }
 
