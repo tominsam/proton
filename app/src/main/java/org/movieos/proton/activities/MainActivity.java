@@ -77,9 +77,13 @@ public class MainActivity extends AppCompatActivity implements MediaAdapter.Medi
         });
 
         // offset the recycler view content so that it never overlaps the header buttons
-        mBinding.wrapper.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
-            int side = getResources().getDimensionPixelSize(R.dimen.media_padding);
-            mBinding.recyclerview.setPaddingRelative(side, bottom, side, 0);
+        mBinding.wrapper.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            @Override
+            public void onLayoutChange(final View v, final int left, final int top, final int right, final int bottom, final int oldLeft, final int oldTop, final int oldRight, final int oldBottom) {
+                int side = MainActivity.this.getResources().getDimensionPixelSize(R.dimen.media_padding);
+                mBinding.recyclerview.setPaddingRelative(side, bottom, side, 0);
+                mBinding.wrapper.removeOnLayoutChangeListener(this);
+            }
         });
 
         // makes the recyclerview tap-through, so that the buttons in the main view still work
@@ -95,12 +99,14 @@ public class MainActivity extends AppCompatActivity implements MediaAdapter.Medi
 
         // Lay out images in a grid.
         // re-count the columns if the width changes - we want the images to be about 150dp wide
-        GridLayoutManager layout = new GridLayoutManager(this, 2);
-        mBinding.recyclerview.setLayoutManager(layout);
-        mBinding.recyclerview.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
-            int width = right - left - v.getPaddingStart() - v.getPaddingEnd();
-            int spans = Math.round((float)width / getResources().getDimensionPixelSize(R.dimen.ideal_media_size));
-            layout.setSpanCount(spans);
+        mBinding.recyclerview.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            @Override
+            public void onLayoutChange(final View v, final int left, final int top, final int right, final int bottom, final int oldLeft, final int oldTop, final int oldRight, final int oldBottom) {
+                int width = right - left - v.getPaddingStart() - v.getPaddingEnd();
+                int spans = Math.round((float) width / MainActivity.this.getResources().getDimensionPixelSize(R.dimen.ideal_media_size));
+                mBinding.recyclerview.setLayoutManager(new GridLayoutManager(MainActivity.this, spans));
+                mBinding.recyclerview.removeOnLayoutChangeListener(this);
+            }
         });
 
         // as the view is scrolled, fade out the main content

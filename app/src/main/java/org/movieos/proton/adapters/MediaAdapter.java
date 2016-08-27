@@ -42,6 +42,13 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.MediaHolder>
         mImageIdIndex = mImageCursor.getColumnIndex(MediaStore.Images.Media._ID);
         mDataIndex = mImageCursor.getColumnIndex(MediaStore.Images.Media.DATA);
         mMediaTappedListener = listener;
+        setHasStableIds(true);
+    }
+
+    @Override
+    public long getItemId(final int position) {
+        mImageCursor.moveToPosition(position);
+        return mImageCursor.getInt(mImageIdIndex);
     }
 
     @Override
