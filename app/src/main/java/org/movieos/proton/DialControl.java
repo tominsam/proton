@@ -4,6 +4,8 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -25,7 +27,7 @@ public class DialControl extends View {
     Paint mMajor;
     Paint mMinor;
     Paint mCursor;
-    VelocityTracker mVelocityTracker;
+    @Nullable VelocityTracker mVelocityTracker;
     OverScroller mOverScroller;
     ValueAnimator mValueAnimator;
 
@@ -128,7 +130,7 @@ public class DialControl extends View {
     }
 
     @Override
-    protected void onDraw(Canvas canvas) {
+    protected void onDraw(@NonNull Canvas canvas) {
         //canvas.drawRect(0, 0, getWidth(), getHeight(), mBackground);
 
         if (mOverScroller.computeScrollOffset()) {
@@ -178,7 +180,7 @@ public class DialControl extends View {
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent event) {
+    public boolean onTouchEvent(@NonNull MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 if (mVelocityTracker == null) {
@@ -262,7 +264,7 @@ public class DialControl extends View {
             mValueAnimator.setDuration(200);
             mValueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
-                public void onAnimationUpdate(ValueAnimator animation) {
+                public void onAnimationUpdate(@NonNull ValueAnimator animation) {
                     mDragOffset = (Float) animation.getAnimatedValue();
                     invalidate();
                     broadcastValue();

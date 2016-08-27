@@ -5,6 +5,8 @@ import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import java.util.Locale;
 
@@ -19,7 +21,7 @@ public class CorrectionManager implements Parcelable {
     public CorrectionManager() {
     }
 
-    protected CorrectionManager(Parcel in) {
+    protected CorrectionManager(@NonNull Parcel in) {
         mRotation = in.readDouble();
         mVerticalSkew = in.readDouble();
         mHorizontalSkew = in.readDouble();
@@ -27,7 +29,7 @@ public class CorrectionManager implements Parcelable {
     }
 
     @Override
-    public void writeToParcel(Parcel dest, int flags) {
+    public void writeToParcel(@NonNull Parcel dest, int flags) {
         dest.writeDouble(mRotation);
         dest.writeDouble(mVerticalSkew);
         dest.writeDouble(mHorizontalSkew);
@@ -40,11 +42,13 @@ public class CorrectionManager implements Parcelable {
     }
 
     public static final Creator<CorrectionManager> CREATOR = new Creator<CorrectionManager>() {
+        @NonNull
         @Override
-        public CorrectionManager createFromParcel(Parcel in) {
+        public CorrectionManager createFromParcel(@NonNull Parcel in) {
             return new CorrectionManager(in);
         }
 
+        @NonNull
         @Override
         public CorrectionManager[] newArray(int size) {
             return new CorrectionManager[size];
@@ -56,7 +60,8 @@ public class CorrectionManager implements Parcelable {
         return String.format(Locale.US, "CorrectionManager{%f %f %f %s}", mRotation, mHorizontalSkew, mVerticalSkew, mCrop ? "cropped" : "not cropped");
     }
 
-    public Matrix getMatrix(Bitmap source) {
+    @NonNull
+    public Matrix getMatrix(@Nullable Bitmap source) {
         Matrix matrix = new Matrix();
         if (source == null) {
             return matrix;

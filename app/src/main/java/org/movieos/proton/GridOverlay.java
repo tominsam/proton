@@ -3,6 +3,7 @@ package org.movieos.proton;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -67,7 +68,7 @@ public class GridOverlay extends View {
     }
 
     @Override
-    protected void onDraw(Canvas canvas) {
+    protected void onDraw(@NonNull Canvas canvas) {
         for (int x = mGridSpacing; x < canvas.getWidth(); x += mGridSpacing) {
             canvas.drawLine(x, 0, x, canvas.getHeight(), mGridPaint);
         }

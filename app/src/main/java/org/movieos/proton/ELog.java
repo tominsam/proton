@@ -1,11 +1,12 @@
 package org.movieos.proton;
 
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 public class ELog {
     private static boolean printLogs = BuildConfig.DEBUG;
 
-    private static String BASE_TAG = "Movieos::";
+    @NonNull private static String BASE_TAG = "Movieos::";
 
     public static void d(String tag, String msg) {
         if (printLogs) {

@@ -6,11 +6,14 @@ import android.databinding.DataBindingUtil;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
+import org.movieos.proton.ELog;
 import org.movieos.proton.R;
 import org.movieos.proton.databinding.MainActivityBinding;
 
@@ -21,14 +24,14 @@ public class MainActivity extends AppCompatActivity {
     private transient static final String TAG = MainActivity.class.getSimpleName();
 
     static int RESULT_LOAD_IMAGE = 9001;
-    private Uri mOutputFileUri;
+    @Nullable private Uri mOutputFileUri;
     @SuppressWarnings("FieldCanBeLocal")
     private MainActivityBinding mBinding;
 
     private FirebaseAnalytics mFirebaseAnalytics;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         if (savedInstanceState != null) {
@@ -49,8 +52,8 @@ public class MainActivity extends AppCompatActivity {
 
         mBinding.mainActivityCamera.setOnClickListener(v -> {
             Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            File file = new File(Environment.getExternalStorageDirectory(), "capture.jpg");
-            mOutputFileUri = Uri.fromFile(file);
+            File file = new File(getExternalFilesDir("capture"), "capture.jpg");
+            mOutputFileUri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", file);
             intent.putExtra(MediaStore.EXTRA_OUTPUT, mOutputFileUri);
             startActivityForResult(intent, RESULT_LOAD_IMAGE);
         });
@@ -64,13 +67,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putParcelable("filename", mOutputFileUri);
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if (requestCode == RESULT_LOAD_IMAGE) {
             if (resultCode == Activity.RESULT_OK) {
 
@@ -79,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
                 mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
 
                 Intent intent = new Intent(this, CorrectionActivity.class);
-                if (data != null) {
+                if (data != null && data.getData() != null) {
                     Uri selectedImageUri = data.getData();
                     intent.setData(selectedImageUri);
                     Bitmap photo = data.getExtras() == null ? null : (Bitmap) data.getExtras().get("data");
@@ -89,6 +92,8 @@ public class MainActivity extends AppCompatActivity {
                     intent.setData(mOutputFileUri);
                 }
                 startActivity(intent);
+            } else {
+                ELog.i(TAG, "Camera cancelled");
             }
 
         } else {

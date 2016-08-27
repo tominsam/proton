@@ -5,6 +5,7 @@
     <string name="action_share">Share</string>
     <string name="action_save">Save</string>
     <string name="write_error">Can\'t write image to disk</string>
+    <string name="saving">Saving image…</string>
     <string name="share_title">Share Image</string>
     <string name="save_complete">Save complete</string>
     <string name="read_error">Error reading image</string>

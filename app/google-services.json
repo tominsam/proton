@@ -8,37 +8,6 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:23770117558:android:af28cde235a8a541",
-        "android_client_info": {
-          "package_name": "com.movieos.proton"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "23770117558-ee72dien9qi9saqkalfgancqjen9ngrd.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyDJewp2FcCJh1g5QXsffmf-mBtsoglfvfg"
-        }
-      ],
-      "services": {
-        "analytics_service": {
-          "status": 1
-        },
-        "appinvite_service": {
-          "status": 1,
-          "other_platform_oauth_client": []
-        },
-        "ads_service": {
-          "status": 2
-        }
-      }
-    },
-    {
-      "client_info": {
         "mobilesdk_app_id": "1:23770117558:android:8facec3bd9ca9d65",
         "android_client_info": {
           "package_name": "org.movieos.proton.debug"
@@ -75,6 +44,37 @@
               "client_type": 3
             }
           ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:23770117558:android:80ec21ff71a177de",
+        "android_client_info": {
+          "package_name": "org.movieos.proton"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "23770117558-ee72dien9qi9saqkalfgancqjen9ngrd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJewp2FcCJh1g5QXsffmf-mBtsoglfvfg"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
         },
         "ads_service": {
           "status": 2

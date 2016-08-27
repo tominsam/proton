@@ -1,7 +1,9 @@
 package org.movieos.proton.activities;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.databinding.DataBindingUtil;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -13,6 +15,10 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.Menu;
@@ -39,32 +45,37 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import static org.movieos.proton.R.menu.correction;
+
 
 public class CorrectionActivity extends AppCompatActivity implements DialControl.OnDialChangeListener {
     private transient static final String TAG = CorrectionActivity.class.getSimpleName();
 
-    private static final boolean ALWAYS_SAVE = true; // TODO setting or something
+    static final int REQUEST_STORAGE_WRITE = 4000;
 
     private CorrectionActivityBinding mBinding;
     private FirebaseAnalytics mFirebaseAnalytics;
+    private Toast mToast;
 
     enum Mode {
         ROTATE, VERTICAL_SKEW, HORIZONTAL_SKEW
     };
 
     // derived from launch state
+    @Nullable
     Bitmap mSource;
     Bitmap mPreview;
     float mOriginalLatitude;
     float mOrigainlLongitude;
 
     // view state
-    CorrectionManager mCorrection;
+    @NonNull
+    CorrectionManager mCorrection = new CorrectionManager();
     Mode mMode = Mode.ROTATE;
     boolean mGrid;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         mBinding = DataBindingUtil.setContentView(this, R.layout.correction_activity);
@@ -73,6 +84,8 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
         mBinding.toolbar.setNavigationOnClickListener(v -> {
             finish();
         });
+        mBinding.toolbar.inflateMenu(correction);
+        mBinding.toolbar.setOnMenuItemClickListener(this::onOptionsItemSelected);
 
         mBinding.rotateButton.setOnClickListener(v -> {
             mMode = Mode.ROTATE;
@@ -109,8 +122,7 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
         // (b) (legacy/gone) Opened with bitmap in data (MainActivity camera)
         // (c) Opened with share intent
 
-        // look for raw bitmap in data (TODO anything still use this?)
-        mSource = getIntent().getExtras() == null ? null : (Bitmap) getIntent().getExtras().get("data");
+        mSource = null;
 
         // MainActivity document picker / camera written data to file on disk
         Uri selectedImageUri = getIntent().getData();
@@ -133,7 +145,7 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
         }
 
         if (mSource == null) {
-            Toast.makeText(this, R.string.read_error, Toast.LENGTH_LONG).show();
+            toast(R.string.read_error);
             finish();
         }
 
@@ -156,13 +168,12 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
         mBinding.dial.setOnChangeListener(this);
 
         if (savedInstanceState != null) {
-            mCorrection = savedInstanceState.getParcelable("correction");
+            CorrectionManager correction = savedInstanceState.getParcelable("correction");
+            if (correction != null) {
+                mCorrection = correction;
+            }
             mGrid = savedInstanceState.getBoolean("grid");
             mMode = Mode.valueOf(savedInstanceState.getString("mode"));
-        }
-
-        if (mCorrection == null) {
-            mCorrection = new CorrectionManager();
         }
 
     }
@@ -185,26 +196,19 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.correction, menu);
+        getMenuInflater().inflate(correction, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
                 finish();
                 return true;
             case R.id.action_save:
-                File file = save();
-                Toast.makeText(this, R.string.save_complete, Toast.LENGTH_LONG).show();
-                if (getIntent().getAction() != null && getIntent().getAction().equals(Intent.ACTION_EDIT)) {
-                    Intent data = new Intent();
-                    data.setData(Uri.parse("file://" + file.getAbsolutePath()));
-                    setResult(Activity.RESULT_OK, data);
-                    finish();
-                }
+                save();
                 return true;
             case R.id.action_share:
                 share();
@@ -214,7 +218,7 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
         }
     }
 
-    void activate(ImageButton v) {
+    void activate(@NonNull ImageButton v) {
         mBinding.rotateButton.setActivated(false);
         mBinding.verticalSkewButton.setActivated(false);
         mBinding.horizontalSkewButton.setActivated(false);
@@ -266,7 +270,8 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
         updateImage();
     }
 
-    File getAlbumStorageDir(String albumName) {
+    @NonNull
+    File getAlbumStorageDir(@NonNull String albumName) {
         File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), albumName);
         if (!file.mkdirs()) {
             ELog.e(TAG, "Directory not created");
@@ -274,7 +279,8 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
         return file;
     }
 
-    void writeToFile(File file) {
+    void writeToFile(@NonNull File file) {
+        toast(R.string.saving);
         Bitmap output = Bitmap.createBitmap(mSource.getWidth(), mSource.getHeight(), mSource.getConfig());
         Canvas canvas = new Canvas(output);
         Paint paint = new Paint();
@@ -296,38 +302,69 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
 
         } catch (IOException e) {
             ELog.e(TAG, "java.io.IOException", e);
-            Toast.makeText(this, R.string.write_error, Toast.LENGTH_LONG).show();
+            toast(R.string.write_error);
         } finally {
             output.recycle();
         }
     }
 
-    File save() {
+    private void save() {
+        int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_STORAGE_WRITE);
+            return;
+        }
+
         File album = getAlbumStorageDir(getString(R.string.album_name));
         File file = new File(album, filename());
         writeToFile(file);
-        return file;
+        toast(R.string.save_complete);
+        if (getIntent().getAction() != null && getIntent().getAction().equals(Intent.ACTION_EDIT)) {
+            Intent data = new Intent();
+            data.setData(Uri.parse("file://" + file.getAbsolutePath()));
+            setResult(Activity.RESULT_OK, data);
+            finish();
+        }
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            switch (requestCode) {
+                case REQUEST_STORAGE_WRITE:
+                    save();
+                    break;
+            }
+        }
+    }
+
+    @NonNull
     String filename() {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss.SSSZ", Locale.US);
         return format.format(new Date()) + ".jpg";
     }
 
     void share() {
-        File saved;
-        if (ALWAYS_SAVE) {
-            saved = save();
-        } else {
-            saved = getTempFile();
-            writeToFile(saved);
-        }
-
+        File saved = getTempFile();
+        writeToFile(saved);
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
         intent.setType("image/jpeg");
-        intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(saved));
+        Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", saved);
+        intent.putExtra(Intent.EXTRA_STREAM, uri);
         startActivity(Intent.createChooser(intent, getString(R.string.share_title)));
+    }
+
+    private void toast(final int message) {
+        untoast();
+        mToast = Toast.makeText(this, message, Toast.LENGTH_LONG);
+        mToast.show();
+    }
+
+    private void untoast() {
+        if (mToast != null) {
+            mToast.cancel();
+        }
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -365,7 +402,7 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
         return sb.toString();
     }
 
-    private void buildSourceFromContentUri(Uri selectedImageUri) throws IOException {
+    private void buildSourceFromContentUri(@NonNull Uri selectedImageUri) throws IOException {
         // pull the stream into a file so I can read the EXIF off it
         InputStream inputStream = getContentResolver().openInputStream(selectedImageUri);
         if (inputStream == null) {
