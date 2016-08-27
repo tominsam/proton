@@ -1,4 +1,4 @@
-package org.movieos.proton;
+package org.movieos.proton.activities;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -10,6 +10,8 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
+import org.movieos.proton.R;
 import org.movieos.proton.databinding.MainActivityBinding;
 
 import java.io.File;
@@ -23,9 +25,12 @@ public class MainActivity extends AppCompatActivity {
     @SuppressWarnings("FieldCanBeLocal")
     private MainActivityBinding mBinding;
 
+    private FirebaseAnalytics mFirebaseAnalytics;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         if (savedInstanceState != null) {
             mOutputFileUri = savedInstanceState.getParcelable("filename");
         }
@@ -68,6 +73,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == RESULT_LOAD_IMAGE) {
             if (resultCode == Activity.RESULT_OK) {
+
+                Bundle bundle = new Bundle();
+                bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "image");
+                mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
+
                 Intent intent = new Intent(this, CorrectionActivity.class);
                 if (data != null) {
                     Uri selectedImageUri = data.getData();

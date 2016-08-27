@@ -13,7 +13,7 @@
         android:theme="@style/AppTheme"
         >
         <activity
-            android:name=".MainActivity"
+            android:name=".activities.MainActivity"
             android:label="@string/app_name"
             >
             <intent-filter>
@@ -23,7 +23,7 @@
         </activity>
 
         <activity
-            android:name=".CorrectionActivity"
+            android:name=".activities.CorrectionActivity"
             >
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
@@ -35,7 +35,7 @@
         </activity>
 
         <activity
-            android:name=".AboutActivity"
+            android:name=".activities.AboutActivity"
             >
         </activity>
 

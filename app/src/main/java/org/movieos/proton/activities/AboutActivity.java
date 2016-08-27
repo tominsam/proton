@@ -1,4 +1,4 @@
-package org.movieos.proton;
+package org.movieos.proton.activities;
 
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
@@ -7,6 +7,8 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
+import org.movieos.proton.R;
 import org.movieos.proton.databinding.AboutActivityBinding;
 
 
@@ -14,10 +16,12 @@ public class AboutActivity extends AppCompatActivity {
     private transient static final String TAG = AboutActivity.class.getSimpleName();
 
     private AboutActivityBinding mBinding;
+    private FirebaseAnalytics mFirebaseAnalytics;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         mBinding = DataBindingUtil.setContentView(this, R.layout.about_activity);
 
         mBinding.toolbar.setNavigationOnClickListener(v -> {
