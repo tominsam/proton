@@ -9,9 +9,8 @@ android {
         applicationId 'org.movieos.proton'
         minSdkVersion 21
         targetSdkVersion 24
-        versionCode 4
-        versionName '0.1'
-
+        versionCode 5
+        versionName '0.2'
         resConfigs "en"
     }
 
@@ -31,9 +30,15 @@ android {
     buildTypes {
         debug {
             setApplicationIdSuffix('debug')
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
         release {
             signingConfig signingConfigs.release
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 
@@ -51,17 +56,14 @@ android.signingConfigs.release.storePassword = props.keyStorePassword
 android.signingConfigs.release.keyPassword = props.keyAliasPassword
 
 dependencies {
-    //    compile 'com.jakewharton:butterknife:5.1.2'
     compile 'com.android.support:support-v4:24.2.0'
-    //    compile 'org.parceler:parceler-api:0.2.10'
-    //    provided 'org.parceler:parceler:0.2.10'
     compile 'com.android.support:appcompat-v7:24.2.0'
+    compile 'com.android.support:design:24.2.0'
     compile 'com.google.firebase:firebase-core:9.4.0'
     compile 'com.google.firebase:firebase-crash:9.4.0'
     compile 'com.google.firebase:firebase-analytics:9.4.0'
     compile 'com.google.code.gson:gson:2.5'
     retrolambdaConfig 'net.orfjackal.retrolambda:retrolambda:2.3.0'
-    compile 'com.android.support:design:24.2.0'
 }
 
 // must be at bottom
