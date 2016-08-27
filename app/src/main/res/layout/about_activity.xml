@@ -14,8 +14,6 @@
             android:id="@+id/toolbar"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:background="?colorPrimary"
-            android:fitsSystemWindows="true"
             android:theme="?actionBarStyle"
             app:title="@string/app_name"
             tools:title="Proton"

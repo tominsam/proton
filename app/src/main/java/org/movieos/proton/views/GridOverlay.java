@@ -1,11 +1,11 @@
-package org.movieos.proton;
+package org.movieos.proton.views;
 
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.support.annotation.NonNull;
 import android.util.AttributeSet;
-import android.view.View;
+import android.view.View;import org.movieos.proton.R;
 
 public class GridOverlay extends View {
     private transient static final String TAG = GridOverlay.class.getSimpleName();

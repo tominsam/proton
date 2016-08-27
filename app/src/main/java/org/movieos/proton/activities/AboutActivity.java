@@ -4,9 +4,7 @@ import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.view.MenuItem;
 import android.view.WindowManager;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -27,10 +25,6 @@ public class AboutActivity extends AppCompatActivity {
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         mBinding = DataBindingUtil.setContentView(this, R.layout.about_activity);
 
-        mBinding.toolbar.setNavigationOnClickListener(v -> {
-            onBackPressed();
-        });
-
         mBinding.toolbar.setNavigationIcon(R.drawable.ic_arrow_back_black_24dp);
         mBinding.toolbar.setNavigationOnClickListener(v -> {
             finish();
@@ -47,14 +41,6 @@ public class AboutActivity extends AppCompatActivity {
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
         });
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            finish();
-        }
-        return super.onOptionsItemSelected(item);
     }
 
 }

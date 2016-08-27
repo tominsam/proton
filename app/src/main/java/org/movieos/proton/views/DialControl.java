@@ -1,4 +1,4 @@
-package org.movieos.proton;
+package org.movieos.proton.views;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
@@ -13,6 +13,9 @@ import android.view.VelocityTracker;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.OverScroller;
+
+import org.movieos.proton.ELog;
+import org.movieos.proton.R;
 
 public class DialControl extends View {
     private transient static final String TAG = DialControl.class.getSimpleName();

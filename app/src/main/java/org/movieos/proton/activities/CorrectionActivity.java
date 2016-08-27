@@ -31,7 +31,7 @@ import android.widget.Toast;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 import org.movieos.proton.CorrectionManager;
-import org.movieos.proton.DialControl;
+import org.movieos.proton.views.DialControl;
 import org.movieos.proton.ELog;
 import org.movieos.proton.R;
 import org.movieos.proton.databinding.CorrectionActivityBinding;

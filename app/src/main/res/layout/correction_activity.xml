@@ -13,8 +13,6 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="?colorPrimary"
-            android:fitsSystemWindows="true"
             android:theme="?actionBarStyle"
             app:title="@string/app_name"
             />
@@ -36,7 +34,7 @@
                 android:scaleType="matrix"
                 />
 
-            <org.movieos.proton.GridOverlay
+            <org.movieos.proton.views.GridOverlay
                 android:id="@+id/grid"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -108,7 +106,7 @@
                 />
         </LinearLayout>
 
-        <org.movieos.proton.DialControl
+        <org.movieos.proton.views.DialControl
             android:id="@+id/dial"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

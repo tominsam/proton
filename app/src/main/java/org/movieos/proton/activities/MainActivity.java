@@ -1,34 +1,43 @@
 package org.movieos.proton.activities;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.databinding.DataBindingUtil;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.view.MotionEvent;
+import android.view.View;
 import android.view.WindowManager;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 import org.movieos.proton.ELog;
 import org.movieos.proton.R;
+import org.movieos.proton.adapters.MediaAdapter;
 import org.movieos.proton.databinding.MainActivityBinding;
 
 import java.io.File;
 
-
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements MediaAdapter.MediaTappedListener {
     private transient static final String TAG = MainActivity.class.getSimpleName();
 
-    static int RESULT_LOAD_IMAGE = 9001;
-    @Nullable private Uri mOutputFileUri;
-    @SuppressWarnings("FieldCanBeLocal")
-    private MainActivityBinding mBinding;
+    static final int RESULT_LOAD_IMAGE = 9001;
+    static final int RESULT_READ_PERMISSION = 9002;
 
+    @Nullable
+    private Uri mOutputFileUri;
+    private MainActivityBinding mBinding;
     private FirebaseAnalytics mFirebaseAnalytics;
 
     @Override
@@ -67,12 +76,69 @@ public class MainActivity extends AppCompatActivity {
             imageGalleryIntent.setType("image/*");
             startActivityForResult(imageGalleryIntent, RESULT_LOAD_IMAGE);
         });
+
+        // offset the recycler view content so that it never overlaps the header buttons
+        mBinding.wrapper.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+            int side = getResources().getDimensionPixelSize(R.dimen.media_padding);
+            mBinding.recyclerview.setPaddingRelative(side, bottom, side, 0);
+        });
+
+        // makes the recyclerview tap-through, so that the buttons in the main view still work
+        // only works if the recycler view has the exact same frame as the wrapper view!
+        mBinding.recyclerview.setOnTouchListener((v, event) -> {
+            if (mBinding.wrapper.getAlpha() > 0.2) {
+                MotionEvent e = MotionEvent.obtain(event);
+                mBinding.wrapper.dispatchTouchEvent(e);
+                e.recycle();
+            }
+            return false;
+        });
+
+        // Lay out images in a grid.
+        // re-count the columns if the width changes - we want the images to be about 150dp wide
+        GridLayoutManager layout = new GridLayoutManager(this, 2, LinearLayoutManager.VERTICAL, false);
+        mBinding.recyclerview.setLayoutManager(layout);
+        mBinding.recyclerview.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+            int width = right - left - v.getPaddingStart() - v.getPaddingEnd();
+            int spans = Math.round((float)width / getResources().getDimensionPixelSize(R.dimen.ideal_media_size));
+            layout.setSpanCount(spans);
+        });
+
+        // as the view is scrolled, fade out the main content
+        mBinding.recyclerview.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(final RecyclerView recyclerView, final int dx, final int dy) {
+                View firstChild = recyclerView.getLayoutManager().getChildAt(0);
+                float scroll = mBinding.wrapper.getBottom() - firstChild.getTop();
+                float compare = scroll / (mBinding.wrapper.getHeight() / 4);
+                mBinding.wrapper.setAlpha(1 - Math.max(Math.min(compare, 1), 0));
+            }
+        });
+
+        // If we have media permissions, display images, otherwise ask for them
+        int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
+        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, RESULT_READ_PERMISSION);
+        } else {
+            mBinding.recyclerview.setAdapter(new MediaAdapter(this, this));
+        }
     }
 
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putParcelable("filename", mOutputFileUri);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            switch (requestCode) {
+                case RESULT_READ_PERMISSION:
+                    mBinding.recyclerview.setAdapter(new MediaAdapter(this, this));
+                    break;
+            }
+        }
     }
 
     @Override
@@ -84,17 +150,8 @@ public class MainActivity extends AppCompatActivity {
                 bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "image");
                 mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
 
-                Intent intent = new Intent(this, CorrectionActivity.class);
-                if (data != null && data.getData() != null) {
-                    Uri selectedImageUri = data.getData();
-                    intent.setData(selectedImageUri);
-                    Bitmap photo = data.getExtras() == null ? null : (Bitmap) data.getExtras().get("data");
-                    intent.putExtra("data", photo);
-                } else {
-                    // null data, so the camera just wrote the file
-                    intent.setData(mOutputFileUri);
-                }
-                startActivity(intent);
+                Uri uri = (data != null && data.getData() != null) ? data.getData() : mOutputFileUri;
+                startCorrection(uri);
             } else {
                 ELog.i(TAG, "Camera cancelled");
             }
@@ -103,4 +160,16 @@ public class MainActivity extends AppCompatActivity {
             super.onActivityResult(requestCode, resultCode, data);
         }
     }
+
+    private void startCorrection(final Uri uri) {
+        Intent intent = new Intent(this, CorrectionActivity.class);
+        intent.setData(uri);
+        startActivity(intent);
+    }
+
+    @Override
+    public void onMediaTapped(final Uri contentUri) {
+        startCorrection(contentUri);
+    }
+
 }

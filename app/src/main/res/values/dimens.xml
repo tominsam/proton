@@ -9,4 +9,8 @@
     <dimen name="dial_bottom">20dp</dimen>
     <dimen name="dial_font_size">10sp</dimen>
     <dimen name="dial_text_bottom">8dp</dimen>
+
+    <dimen name="ideal_media_size">150dp</dimen>
+    <dimen name="media_spacing">8dp</dimen>
+    <dimen name="media_padding">40dp</dimen>
 </resources>
