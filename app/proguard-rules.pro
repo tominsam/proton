@@ -16,6 +16,7 @@
 #   public *;
 #}
 
+-dontobfuscate
 -keepattributes SourceFile,LineNumberTable
 
 # retrolambda
