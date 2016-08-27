@@ -11,6 +11,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
+import android.view.WindowManager;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 import org.movieos.proton.ELog;
@@ -33,6 +34,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         if (savedInstanceState != null) {
             mOutputFileUri = savedInstanceState.getParcelable("filename");

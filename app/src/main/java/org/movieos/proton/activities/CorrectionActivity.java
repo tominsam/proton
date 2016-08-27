@@ -24,6 +24,7 @@ import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -77,6 +78,7 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         mBinding = DataBindingUtil.setContentView(this, R.layout.correction_activity);
 

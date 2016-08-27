@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
+import android.view.WindowManager;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 import org.movieos.proton.R;
@@ -22,6 +23,7 @@ public class AboutActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         mBinding = DataBindingUtil.setContentView(this, R.layout.about_activity);
 
@@ -29,7 +31,6 @@ public class AboutActivity extends AppCompatActivity {
             onBackPressed();
         });
 
-        mBinding.toolbar.inflateMenu(R.menu.main);
         mBinding.toolbar.setNavigationIcon(R.drawable.ic_arrow_back_black_24dp);
         mBinding.toolbar.setNavigationOnClickListener(v -> {
             finish();
