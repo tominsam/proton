@@ -36,9 +36,12 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.MediaHolder>
         mImageCursor = context.getContentResolver().query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
             projection, // Which columns to return
             null, // no filter
-            null,
-            MediaStore.Images.ImageColumns.DATE_TAKEN + " DESC");
-        assert mImageCursor != null;
+            null, // no filter
+            MediaStore.Images.ImageColumns.DATE_TAKEN + " DESC" // sort by date taken, descending
+        );
+        if (mImageCursor == null) {
+            throw new AssertionError("no image cursor");
+        }
         mImageIdIndex = mImageCursor.getColumnIndex(MediaStore.Images.Media._ID);
         mDataIndex = mImageCursor.getColumnIndex(MediaStore.Images.Media.DATA);
         mMediaTappedListener = listener;
@@ -64,7 +67,7 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.MediaHolder>
 
         holder.bind(imageId);
         holder.itemView.setOnClickListener(v -> {
-            // I suspect this is wrong, but I need more evidence.
+            // I suspect this is wrong, but I need more evidence. It works, is the problem.
             if (mMediaTappedListener != null) {
                 mMediaTappedListener.onMediaTapped(Uri.fromFile(new File(path)));
             }
@@ -74,10 +77,6 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.MediaHolder>
     @Override
     public int getItemCount() {
         return mImageCursor.getCount();
-    }
-
-    public void setMediaTappedListener(final MediaTappedListener mediaTappedListener) {
-        mMediaTappedListener = mediaTappedListener;
     }
 
     public interface MediaTappedListener {
@@ -108,6 +107,7 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.MediaHolder>
 
         static void loadImage(ImageView imageView, int imageId) {
             // show placeholder while loading
+            @SuppressWarnings("ConstantConditions")
             Drawable placeHolder = imageView.getContext().getDrawable(R.drawable.ic_photo_black_24dp).mutate();
             placeHolder.setTint(0xFF444444);
             imageView.setScaleType(ImageView.ScaleType.CENTER);

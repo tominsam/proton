@@ -46,12 +46,13 @@ public class MainActivity extends AppCompatActivity implements MediaAdapter.Medi
 
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         if (savedInstanceState != null) {
+            // the camera tends to force us out of memory, so we need to retain this
             mOutputFileUri = savedInstanceState.getParcelable("filename");
         }
 
         mBinding = DataBindingUtil.setContentView(this, R.layout.main_activity);
-        mBinding.toolbar.inflateMenu(R.menu.main);
 
+        mBinding.toolbar.inflateMenu(R.menu.main);
         mBinding.toolbar.setOnMenuItemClickListener(item -> {
             switch (item.getItemId()) {
                 case R.id.action_about:
@@ -76,7 +77,7 @@ public class MainActivity extends AppCompatActivity implements MediaAdapter.Medi
             startActivityForResult(imageGalleryIntent, RESULT_LOAD_IMAGE);
         });
 
-        // offset the recycler view content so that it never overlaps the header buttons
+        // top-pad the recycler view content so that it never overlaps the header buttons
         mBinding.wrapper.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
             @Override
             public void onLayoutChange(final View v, final int left, final int top, final int right, final int bottom, final int oldLeft, final int oldTop, final int oldRight, final int oldBottom) {
@@ -97,13 +98,15 @@ public class MainActivity extends AppCompatActivity implements MediaAdapter.Medi
             return false;
         });
 
-        // Lay out images in a grid.
+        // We want to lay out images in a grid.
         // re-count the columns if the width changes - we want the images to be about 150dp wide
         mBinding.recyclerview.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
             @Override
             public void onLayoutChange(final View v, final int left, final int top, final int right, final int bottom, final int oldLeft, final int oldTop, final int oldRight, final int oldBottom) {
                 int width = right - left - v.getPaddingStart() - v.getPaddingEnd();
                 int spans = Math.round((float) width / MainActivity.this.getResources().getDimensionPixelSize(R.dimen.ideal_media_size));
+                // It's much more reliable to re-set the layout manager here than try to change
+                // the span count. I think the adapter is incorrectly layout out views when that happens.
                 mBinding.recyclerview.setLayoutManager(new GridLayoutManager(MainActivity.this, spans));
                 mBinding.recyclerview.removeOnLayoutChangeListener(this);
             }
@@ -132,6 +135,8 @@ public class MainActivity extends AppCompatActivity implements MediaAdapter.Medi
     protected void onResume() {
         super.onResume();
 
+        // Update cursor on resume, so that if the user changes their media library in the
+        // background we'll notice. (TODO can I watch the cursor or something? This will matter more for split screen)
         // If we have media permissions, display images, otherwise ask for them
         int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
         if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
