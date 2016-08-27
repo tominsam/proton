@@ -92,11 +92,30 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
             updateControls();
         });
 
+        float d = getResources().getDisplayMetrics().density;
+        Matrix parallelogram = new Matrix();
+        parallelogram.setPolyToPoly(new float[]{
+            0 * d, 0 * d,
+            0 * d, 24 * d,
+            24 * d, 24 * d,
+            24 * d, 0 * d,
+        }, 0, new float[]{
+            11 * d, 11 * d,
+            11 * d, 37 * d,
+            37 * d, 32 * d,
+            37 * d, 16 * d,
+        }, 0, 4);
+
+        mBinding.verticalSkewButton.setScaleType(ImageView.ScaleType.MATRIX);
+        mBinding.verticalSkewButton.setImageMatrix(parallelogram);
         mBinding.verticalSkewButton.setOnClickListener(v -> {
             mMode = Mode.VERTICAL_SKEW;
             updateControls();
         });
 
+        parallelogram.postRotate(-90, 24 * d, 24 * d);
+        mBinding.horizontalSkewButton.setScaleType(ImageView.ScaleType.MATRIX);
+        mBinding.horizontalSkewButton.setImageMatrix(parallelogram);
         mBinding.horizontalSkewButton.setOnClickListener(v -> {
             mMode = Mode.HORIZONTAL_SKEW;
             updateControls();
