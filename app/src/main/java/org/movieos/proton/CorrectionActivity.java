@@ -1,8 +1,8 @@
 package org.movieos.proton;
 
-import android.app.ActionBar;
 import android.app.Activity;
 import android.content.Intent;
+import android.databinding.DataBindingUtil;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -13,17 +13,16 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import org.parceler.Parcels;
+import org.movieos.proton.databinding.CorrectionActivityBinding;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -33,55 +32,19 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
+import java.util.Locale;
 
-import butterknife.ButterKnife;
-import butterknife.InjectView;
-import butterknife.InjectViews;
-import butterknife.OnClick;
 
-public class CorrectionActivity extends ActionBarActivity implements DialControl.OnDialChangeListener {
+public class CorrectionActivity extends AppCompatActivity implements DialControl.OnDialChangeListener {
     private transient static final String TAG = CorrectionActivity.class.getSimpleName();
 
     private static final boolean ALWAYS_SAVE = true; // TODO setting or something
 
+    private CorrectionActivityBinding mBinding;
+
     enum Mode {
         ROTATE, VERTICAL_SKEW, HORIZONTAL_SKEW
     };
-
-    @InjectView(R.id.frame)
-    FrameLayout mImageFrame;
-
-    @InjectView(R.id.image)
-    ImageView mImageView;
-
-    @InjectView(R.id.grid)
-    GridOverlay mGridOverlay;
-
-    @InjectView(R.id.dial)
-    DialControl mDialControl;
-
-    @InjectView(R.id.rotate_button)
-    ImageButton mRotateButton;
-
-    @InjectView(R.id.horizontal_skew_button)
-    ImageButton mHskewButton;
-
-    @InjectView(R.id.vertical_skew_button)
-    ImageButton mVskewButton;
-
-    @InjectView(R.id.crop_button)
-    ImageButton mCropButton;
-
-    @InjectView(R.id.grid_button)
-    ImageButton mGridButton;
-
-    @InjectViews({
-            R.id.rotate_button,
-            R.id.vertical_skew_button,
-            R.id.horizontal_skew_button
-    })
-    List<ImageButton> mButtons;
 
     // derived from launch state
     Bitmap mSource;
@@ -94,15 +57,45 @@ public class CorrectionActivity extends ActionBarActivity implements DialControl
     Mode mMode = Mode.ROTATE;
     boolean mGrid;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.correction_activity);
-        ButterKnife.inject(this);
+        mBinding = DataBindingUtil.setContentView(this, R.layout.correction_activity);
 
-        getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_TITLE);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        mBinding.toolbar.setNavigationIcon(R.drawable.ic_arrow_back_black_24dp);
+        mBinding.toolbar.setNavigationOnClickListener(v -> {
+            finish();
+        });
+
+        mBinding.rotateButton.setOnClickListener(v -> {
+            mMode = Mode.ROTATE;
+            updateControls();
+        });
+
+        mBinding.verticalSkewButton.setOnClickListener(v -> {
+            mMode = Mode.VERTICAL_SKEW;
+            updateControls();
+        });
+
+        mBinding.horizontalSkewButton.setOnClickListener(v -> {
+            mMode = Mode.HORIZONTAL_SKEW;
+            updateControls();
+        });
+
+        mBinding.resetButton.setOnClickListener(v -> {
+            mBinding.dial.setValue(0, true);
+        });
+
+        mBinding.cropButton.setOnClickListener(v -> {
+            mCorrection.setCrop(!v.isActivated());
+            updateControls();
+            updateImage();
+        });
+
+        mBinding.gridButton.setOnClickListener(v -> {
+            mGrid = !v.isActivated();
+            updateControls();
+        });
 
         // start paths:
         // (a) opened with URI (MainActivity document picker)
@@ -139,7 +132,7 @@ public class CorrectionActivity extends ActionBarActivity implements DialControl
 
         // Create scaled bitmap the size of the screen. This is probably
         // cheaper than matrixing a huge jpeg.
-        mImageFrame.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+        mBinding.frame.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
             @Override
             public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
                 float width = right - left;
@@ -147,16 +140,16 @@ public class CorrectionActivity extends ActionBarActivity implements DialControl
                 float scale = Math.min(width / mSource.getWidth(), height / mSource.getHeight());
                 ELog.i(TAG, "preview scale is " + scale);
                 mPreview = Bitmap.createScaledBitmap(mSource, (int) (mSource.getWidth() * scale), (int) (mSource.getHeight() * scale), true);
-                mImageView.setImageBitmap(mPreview);
+                mBinding.image.setImageBitmap(mPreview);
                 updateControls();
                 updateImage();
             }
         });
 
-        mDialControl.setOnChangeListener(this);
+        mBinding.dial.setOnChangeListener(this);
 
         if (savedInstanceState != null) {
-            mCorrection = Parcels.unwrap(savedInstanceState.getParcelable("correction"));
+            mCorrection = savedInstanceState.getParcelable("correction");
             mGrid = savedInstanceState.getBoolean("grid");
             mMode = Mode.valueOf(savedInstanceState.getString("mode"));
         }
@@ -170,7 +163,7 @@ public class CorrectionActivity extends ActionBarActivity implements DialControl
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putParcelable("correction", Parcels.wrap(mCorrection));
+        outState.putParcelable("correction", mCorrection);
         outState.putBoolean("grid", mGrid);
         outState.putString("mode", mMode.toString());
     }
@@ -214,73 +207,37 @@ public class CorrectionActivity extends ActionBarActivity implements DialControl
         }
     }
 
-    @OnClick(R.id.rotate_button)
-    void onRotate(ImageButton v) {
-        mMode = Mode.ROTATE;
-        updateControls();
-    }
-
-    @OnClick(R.id.vertical_skew_button)
-    void onVertical(ImageButton v) {
-        mMode = Mode.VERTICAL_SKEW;
-        updateControls();
-    }
-
-    @OnClick(R.id.horizontal_skew_button)
-    void onHorizontal(ImageButton v) {
-        mMode = Mode.HORIZONTAL_SKEW;
-        updateControls();
-    }
-
-    @OnClick(R.id.reset_button)
-    void onReset() {
-        mDialControl.setValue(0, true);
-    }
-
-    @OnClick(R.id.crop_button)
-    void onCrop(ImageButton b) {
-        mCorrection.setCrop(!b.isActivated());
-        updateControls();
-        updateImage();
-    }
-
-    @OnClick(R.id.grid_button)
-    void onGrid(ImageButton b) {
-        mGrid = !b.isActivated();
-        updateControls();
-    }
-
     void activate(ImageButton v) {
-        for (ImageButton b : mButtons) {
-            b.setActivated(false);
-        }
+        mBinding.rotateButton.setActivated(false);
+        mBinding.verticalSkewButton.setActivated(false);
+        mBinding.horizontalSkewButton.setActivated(false);
         v.setActivated(true);
     }
 
     private void updateImage() {
         Matrix matrix = mCorrection.getMatrix(mPreview);
-        mImageView.setScaleType(ImageView.ScaleType.MATRIX);
-        mImageView.setImageMatrix(matrix);
+        mBinding.image.setScaleType(ImageView.ScaleType.MATRIX);
+        mBinding.image.setImageMatrix(matrix);
     }
 
     private void updateControls() {
         switch (mMode) {
             case ROTATE:
-                activate(mRotateButton);
-                mDialControl.setValue(mCorrection.getRotation(), 45, 0.1, 10);
+                activate(mBinding.rotateButton);
+                mBinding.dial.setValue(mCorrection.getRotation(), 45, 0.1, 10);
                 break;
             case VERTICAL_SKEW:
-                activate(mVskewButton);
-                mDialControl.setValue(mCorrection.getVerticalSkew(), 40, 0.1, 10);
+                activate(mBinding.verticalSkewButton);
+                mBinding.dial.setValue(mCorrection.getVerticalSkew(), 40, 0.1, 10);
                 break;
             case HORIZONTAL_SKEW:
-                activate(mHskewButton);
-                mDialControl.setValue(mCorrection.getHorizontalSkew(), 40, 0.1, 10);
+                activate(mBinding.horizontalSkewButton);
+                mBinding.dial.setValue(mCorrection.getHorizontalSkew(), 40, 0.1, 10);
                 break;
         }
-        mGridOverlay.setVisibility(mGrid ? View.VISIBLE : View.INVISIBLE);
-        mGridButton.setActivated(mGrid);
-        mCropButton.setActivated(mCorrection.isCrop());
+        mBinding.grid.setVisibility(mGrid ? View.VISIBLE : View.INVISIBLE);
+        mBinding.gridButton.setActivated(mGrid);
+        mBinding.cropButton.setActivated(mCorrection.isCrop());
     }
 
     @Override
@@ -346,7 +303,7 @@ public class CorrectionActivity extends ActionBarActivity implements DialControl
     }
 
     String filename() {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss.SSSZ");
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss.SSSZ", Locale.US);
         return format.format(new Date()) + ".jpg";
     }
 
@@ -360,12 +317,13 @@ public class CorrectionActivity extends ActionBarActivity implements DialControl
         }
 
         Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
         intent.setType("image/jpeg");
         intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(saved));
         startActivity(Intent.createChooser(intent, getString(R.string.share_title)));
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     private File getTempFile() {
         File saved;
         File folder = new File(getExternalFilesDir("share"), "temp");
@@ -403,6 +361,9 @@ public class CorrectionActivity extends ActionBarActivity implements DialControl
     private void buildSourceFromContentUri(Uri selectedImageUri) throws IOException {
         // pull the stream into a file so I can read the EXIF off it
         InputStream inputStream = getContentResolver().openInputStream(selectedImageUri);
+        if (inputStream == null) {
+            throw new IOException("null input");
+        }
         File temp = getTempFile();
         OutputStream stream = new BufferedOutputStream(new FileOutputStream(temp));
         int bufferSize = 1024;

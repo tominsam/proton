@@ -17,5 +17,6 @@
 
     <!-- Name of the album the saved photos get put into. Should be the same as the app name -->
     <string name="album_name">Proton</string>
+    <string name="logo_content_description">Application logo</string>
 
 </resources>

@@ -1,30 +1,30 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="android:windowBackground">@color/window_background</item>
-        <item name="actionBarStyle">@style/AppActionBar</item>
-        <item name="android:windowActionBarOverlay">true</item><!-- transparent actionbar -->
+        <!--<item name="android:windowTranslucentStatus">true</item>-->
 
-        <item name="colorPrimary">@color/light_forground</item>
+        <item name="actionBarStyle">@style/ThemeOverlay.AppCompat.Dark.ActionBar</item>
+        <item name="popupTheme">@style/ThemeOverlay.AppCompat.Light</item>
+
+        <item name="colorPrimary">@color/dark_foreground</item>
         <item name="colorPrimaryDark">@color/dark_foreground</item>
         <item name="colorAccent">@color/hilight</item>
-
     </style>
 
-    <style name="AppActionBar" parent="Widget.AppCompat.ActionBar">
-        <item name="background">@color/dark_background</item>
+    <style name="AppButton" parent="Base.Widget.AppCompat.Button">
+        <item name="android:background">@drawable/button_background</item>
+        <item name="android:foreground">?android:attr/selectableItemBackground</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="android:minWidth">120dp</item>
+        <item name="android:paddingTop">12dp</item>
+        <item name="android:paddingBottom">12dp</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:lineSpacingExtra">2dp</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textAllCaps">true</item>
     </style>
-
-    <style name="about_page_text">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginTop">16dp</item>
-        <item name="android:textSize">16sp</item>
-        <item name="android:textColor">@color/dark_foreground</item>
-        <item name="android:gravity">center_horizontal</item>
-        <item name="android:padding">8dp</item>
-    </style>
-
 </resources>

@@ -1,0 +1,86 @@
+{
+  "project_info": {
+    "project_number": "23770117558",
+    "firebase_url": "https://proton-e96e9.firebaseio.com",
+    "project_id": "proton-e96e9",
+    "storage_bucket": "proton-e96e9.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:23770117558:android:af28cde235a8a541",
+        "android_client_info": {
+          "package_name": "com.movieos.proton"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "23770117558-ee72dien9qi9saqkalfgancqjen9ngrd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJewp2FcCJh1g5QXsffmf-mBtsoglfvfg"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:23770117558:android:8facec3bd9ca9d65",
+        "android_client_info": {
+          "package_name": "org.movieos.proton.debug"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "23770117558-ot9ueb24790nap8n271d6888ef14iuu7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "org.movieos.proton.debug",
+            "certificate_hash": "C28D38BDA374C6158B7AAB8A5653DA0663CDC599"
+          }
+        },
+        {
+          "client_id": "23770117558-ee72dien9qi9saqkalfgancqjen9ngrd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJewp2FcCJh1g5QXsffmf-mBtsoglfvfg"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "23770117558-ee72dien9qi9saqkalfgancqjen9ngrd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

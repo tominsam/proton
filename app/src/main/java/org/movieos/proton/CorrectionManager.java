@@ -3,11 +3,12 @@ package org.movieos.proton;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.graphics.RectF;
+import android.os.Parcel;
+import android.os.Parcelable;
 
-import org.parceler.Parcel;
+import java.util.Locale;
 
-@Parcel
-public class CorrectionManager {
+public class CorrectionManager implements Parcelable {
     private transient static final String TAG = CorrectionManager.class.getSimpleName();
 
     double mRotation = 0;
@@ -15,9 +16,44 @@ public class CorrectionManager {
     double mHorizontalSkew = 0;
     boolean mCrop = true;
 
+    public CorrectionManager() {
+    }
+
+    protected CorrectionManager(Parcel in) {
+        mRotation = in.readDouble();
+        mVerticalSkew = in.readDouble();
+        mHorizontalSkew = in.readDouble();
+        mCrop = in.readByte() != 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeDouble(mRotation);
+        dest.writeDouble(mVerticalSkew);
+        dest.writeDouble(mHorizontalSkew);
+        dest.writeByte((byte) (mCrop ? 1 : 0));
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    public static final Creator<CorrectionManager> CREATOR = new Creator<CorrectionManager>() {
+        @Override
+        public CorrectionManager createFromParcel(Parcel in) {
+            return new CorrectionManager(in);
+        }
+
+        @Override
+        public CorrectionManager[] newArray(int size) {
+            return new CorrectionManager[size];
+        }
+    };
+
     @Override
     public String toString() {
-        return String.format("CorrectionManager{%f %f %f %s}", mRotation, mHorizontalSkew, mVerticalSkew, mCrop ? "cropped" : "not cropped");
+        return String.format(Locale.US, "CorrectionManager{%f %f %f %s}", mRotation, mHorizontalSkew, mVerticalSkew, mCrop ? "cropped" : "not cropped");
     }
 
     public Matrix getMatrix(Bitmap source) {
@@ -133,4 +169,6 @@ public class CorrectionManager {
     public void setCrop(boolean crop) {
         mCrop = crop;
     }
+
+
 }
