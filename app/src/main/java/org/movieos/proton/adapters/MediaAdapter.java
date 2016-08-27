@@ -13,10 +13,13 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import org.movieos.proton.ELog;
 import org.movieos.proton.R;
 import org.movieos.proton.databinding.MediaHolderBinding;
 
 import java.io.File;
+
+import static com.google.android.gms.internal.zzs.TAG;
 
 public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.MediaHolder> {
 
@@ -95,43 +98,56 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.MediaHolder>
     private static class ImageLoaderTask extends AsyncTask<Integer, Void, Bitmap> {
         ImageView mImageView;
         Context mContext;
-        Object mTag;
 
         static void loadImage(ImageView imageView, int imageId) {
-            // We're going to track the ID of the image we're trying to load,
-            // so that if the user scrolls quickly we won't load the old
-            // image into the holder that now expects something different.
-            imageView.setTag(String.valueOf(imageId));
-
             // show placeholder while loading
             Drawable placeHolder = imageView.getContext().getDrawable(R.drawable.ic_photo_black_24dp).mutate();
-            placeHolder.setTint(0xFF666666);
+            placeHolder.setTint(0xFF444444);
             imageView.setScaleType(ImageView.ScaleType.CENTER);
             imageView.setImageDrawable(placeHolder);
 
-            // Load image in parallel
+            // Load images in parallel
             new ImageLoaderTask(imageView).executeOnExecutor(THREAD_POOL_EXECUTOR, imageId);
         }
 
         private ImageLoaderTask(final ImageView imageView) {
             mImageView = imageView;
-            mTag = imageView.getTag();
             mContext = imageView.getContext();
+
+            // We're going to track the ID of the image we're trying to load,
+            // so that if the user scrolls quickly we won't load the old
+            // image into the holder that now expects something different.
+            // If we _do_ re-use the image, cancel any pending thumbnail task
+            // currently running on it.
+            //
+            // This isn't perfect. You can still crash slower devices by flinging
+            // the recyclerview a lot. TODO.
+            if (mImageView.getTag() instanceof AsyncTask) {
+                ELog.i(TAG, "cancelling old task");
+                ((AsyncTask) mImageView.getTag()).cancel(true);
+            }
+            mImageView.setTag(this);
         }
 
         @Override
         protected Bitmap doInBackground(final Integer... params) {
-            ContentResolver cr = mContext.getContentResolver();
-            // this will block if needed while it generates the thumbnail
-            return MediaStore.Images.Thumbnails.getThumbnail(cr, params[0], MediaStore.Images.Thumbnails.MINI_KIND, null);
+            try {
+                ContentResolver cr = mContext.getContentResolver();
+                // this will block if needed while it generates the thumbnail
+                return MediaStore.Images.Thumbnails.getThumbnail(cr, params[0], MediaStore.Images.Thumbnails.MINI_KIND, null);
+            } catch (Exception e) {
+                // task probably cancelled
+                return null;
+            }
         }
 
         @Override
         protected void onPostExecute(final Bitmap bitmap) {
-            if (mImageView.getTag().equals(mTag)) {
+            if (mImageView.getTag().equals(this)) {
                 // only write image if we're still trying to load this particular image.
                 mImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
                 mImageView.setImageBitmap(bitmap);
+                mImageView.setTag(null);
             }
         }
     }

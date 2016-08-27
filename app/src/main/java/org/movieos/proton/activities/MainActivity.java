@@ -15,7 +15,6 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.MotionEvent;
 import android.view.View;
@@ -96,7 +95,7 @@ public class MainActivity extends AppCompatActivity implements MediaAdapter.Medi
 
         // Lay out images in a grid.
         // re-count the columns if the width changes - we want the images to be about 150dp wide
-        GridLayoutManager layout = new GridLayoutManager(this, 2, LinearLayoutManager.VERTICAL, false);
+        GridLayoutManager layout = new GridLayoutManager(this, 2);
         mBinding.recyclerview.setLayoutManager(layout);
         mBinding.recyclerview.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
             int width = right - left - v.getPaddingStart() - v.getPaddingEnd();
@@ -115,6 +114,18 @@ public class MainActivity extends AppCompatActivity implements MediaAdapter.Medi
             }
         });
 
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable("filename", mOutputFileUri);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
         // If we have media permissions, display images, otherwise ask for them
         int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
         if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
@@ -122,12 +133,6 @@ public class MainActivity extends AppCompatActivity implements MediaAdapter.Medi
         } else {
             mBinding.recyclerview.setAdapter(new MediaAdapter(this, this));
         }
-    }
-
-    @Override
-    protected void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putParcelable("filename", mOutputFileUri);
     }
 
     @Override
