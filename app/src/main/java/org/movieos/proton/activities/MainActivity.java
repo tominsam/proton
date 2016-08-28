@@ -21,23 +21,24 @@ import android.view.View;
 import android.view.WindowManager;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
-import org.movieos.proton.ELog;
 import org.movieos.proton.R;
 import org.movieos.proton.adapters.MediaAdapter;
 import org.movieos.proton.databinding.MainActivityBinding;
+import timber.log.Timber;
 
 import java.io.File;
 
 public class MainActivity extends AppCompatActivity implements MediaAdapter.MediaTappedListener {
-    private transient static final String TAG = MainActivity.class.getSimpleName();
-
     static final int RESULT_LOAD_IMAGE = 9001;
     static final int RESULT_READ_PERMISSION = 9002;
+    static final String STATE_FILENAME = "filename";
+    static final String STATE_DENIED = "denied";
 
     @Nullable
     private Uri mOutputFileUri;
     private MainActivityBinding mBinding;
     private FirebaseAnalytics mFirebaseAnalytics;
+    private boolean mDeniedPermission;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -47,7 +48,8 @@ public class MainActivity extends AppCompatActivity implements MediaAdapter.Medi
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         if (savedInstanceState != null) {
             // the camera tends to force us out of memory, so we need to retain this
-            mOutputFileUri = savedInstanceState.getParcelable("filename");
+            mOutputFileUri = savedInstanceState.getParcelable(STATE_FILENAME);
+            mDeniedPermission = savedInstanceState.getBoolean(STATE_DENIED);
         }
 
         mBinding = DataBindingUtil.setContentView(this, R.layout.main_activity);
@@ -98,16 +100,25 @@ public class MainActivity extends AppCompatActivity implements MediaAdapter.Medi
             return false;
         });
 
-        // We want to lay out images in a grid.
-        // re-count the columns if the width changes - we want the images to be about 150dp wide
+        // We want to lay out images in a grid. We'll re-count the columns if the width
+        // changes - we want the images to be about 150dp wide.
+        mBinding.recyclerview.setLayoutManager(new GridLayoutManager(MainActivity.this, 1));
         mBinding.recyclerview.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
             @Override
             public void onLayoutChange(final View v, final int left, final int top, final int right, final int bottom, final int oldLeft, final int oldTop, final int oldRight, final int oldBottom) {
+                // work out the number of spans that gets us closest to the desired cell width
                 int width = right - left - v.getPaddingStart() - v.getPaddingEnd();
                 int spans = Math.round((float) width / MainActivity.this.getResources().getDimensionPixelSize(R.dimen.ideal_media_size));
-                // It's much more reliable to re-set the layout manager here than try to change
-                // the span count. I think the adapter is incorrectly layout out views when that happens.
-                mBinding.recyclerview.setLayoutManager(new GridLayoutManager(MainActivity.this, spans));
+                ((GridLayoutManager)mBinding.recyclerview.getLayoutManager()).setSpanCount(spans);
+
+                // delay this till layout is actually complete, so that the grid cells are the right size.
+                // I don't fully understand why I need to do this, but it's neeed or first boot on N fails.
+                if (hasReadPermission()) {
+                    mBinding.recyclerview.postDelayed(() -> {
+                        mBinding.recyclerview.setAdapter(new MediaAdapter(MainActivity.this, MainActivity.this));
+                    }, 0);
+                }
+
                 mBinding.recyclerview.removeOnLayoutChangeListener(this);
             }
         });
@@ -128,7 +139,8 @@ public class MainActivity extends AppCompatActivity implements MediaAdapter.Medi
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putParcelable("filename", mOutputFileUri);
+        outState.putParcelable(STATE_FILENAME, mOutputFileUri);
+        outState.putBoolean(STATE_DENIED, mDeniedPermission);
     }
 
     @Override
@@ -137,13 +149,21 @@ public class MainActivity extends AppCompatActivity implements MediaAdapter.Medi
 
         // Update cursor on resume, so that if the user changes their media library in the
         // background we'll notice. (TODO can I watch the cursor or something? This will matter more for split screen)
+
         // If we have media permissions, display images, otherwise ask for them
-        int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
-        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+        if (mDeniedPermission) {
+            // If the user explicitly denies us, we won't ask again this session
+        } else if (!hasReadPermission()) {
+            // Ask for read permissions on M+
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, RESULT_READ_PERMISSION);
         } else {
+            // We can create the adapter then
             mBinding.recyclerview.setAdapter(new MediaAdapter(this, this));
         }
+    }
+
+    private boolean hasReadPermission() {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
     }
 
     @Override
@@ -151,9 +171,12 @@ public class MainActivity extends AppCompatActivity implements MediaAdapter.Medi
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             switch (requestCode) {
                 case RESULT_READ_PERMISSION:
+                    Timber.i("setting adapter because permission granted");
                     mBinding.recyclerview.setAdapter(new MediaAdapter(this, this));
                     break;
             }
+        } else {
+            mDeniedPermission = true;
         }
     }
 
@@ -169,7 +192,7 @@ public class MainActivity extends AppCompatActivity implements MediaAdapter.Medi
                 Uri uri = (data != null && data.getData() != null) ? data.getData() : mOutputFileUri;
                 startCorrection(uri);
             } else {
-                ELog.i(TAG, "Camera cancelled");
+                Timber.i("Camera cancelled");
             }
 
         } else {

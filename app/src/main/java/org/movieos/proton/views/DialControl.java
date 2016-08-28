@@ -14,8 +14,8 @@ import android.view.View;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.OverScroller;
 
-import org.movieos.proton.ELog;
 import org.movieos.proton.R;
+import timber.log.Timber;
 
 public class DialControl extends View {
     private transient static final String TAG = DialControl.class.getSimpleName();
@@ -258,7 +258,7 @@ public class DialControl extends View {
     public void setValue(double value, boolean animate) {
         mOverScroller.forceFinished(true);
         double target = -valueToPixel(value);
-        ELog.i(TAG, "target is " + target + " from " + value);
+        Timber.i("target is %s from %s", target, value);
         if (animate) {
             if (mValueAnimator != null) {
                 mValueAnimator.cancel();

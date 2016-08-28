@@ -13,13 +13,11 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
-import org.movieos.proton.ELog;
 import org.movieos.proton.R;
 import org.movieos.proton.databinding.MediaHolderBinding;
+import timber.log.Timber;
 
 import java.io.File;
-
-import static com.google.android.gms.internal.zzs.TAG;
 
 public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.MediaHolder> {
 
@@ -46,6 +44,7 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.MediaHolder>
         mDataIndex = mImageCursor.getColumnIndex(MediaStore.Images.Media.DATA);
         mMediaTappedListener = listener;
         setHasStableIds(true);
+        Timber.i("startup with " + mImageCursor.getCount() + " images");
     }
 
     @Override
@@ -130,7 +129,7 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.MediaHolder>
             // This isn't perfect. You can still crash slower devices by flinging
             // the recyclerview a lot. TODO.
             if (mImageView.getTag() instanceof AsyncTask) {
-                ELog.i(TAG, "cancelling old task");
+                Timber.i("cancelling old task");
                 ((AsyncTask) mImageView.getTag()).cancel(true);
             }
             mImageView.setTag(this);

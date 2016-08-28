@@ -13,8 +13,6 @@ import org.movieos.proton.databinding.AboutActivityBinding;
 
 
 public class AboutActivity extends AppCompatActivity {
-    private transient static final String TAG = AboutActivity.class.getSimpleName();
-
     private AboutActivityBinding mBinding;
     private FirebaseAnalytics mFirebaseAnalytics;
 

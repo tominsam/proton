@@ -66,6 +66,7 @@ dependencies {
     compile 'com.google.code.gson:gson:2.5'
     retrolambdaConfig 'net.orfjackal.retrolambda:retrolambda:2.3.0'
     compile 'com.android.support.constraint:constraint-layout:1.0.0-alpha7'
+    compile 'com.jakewharton.timber:timber:4.3.0'
 }
 
 // must be at bottom

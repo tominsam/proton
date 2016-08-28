@@ -31,10 +31,10 @@ import android.widget.Toast;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 import org.movieos.proton.CorrectionManager;
-import org.movieos.proton.views.DialControl;
-import org.movieos.proton.ELog;
 import org.movieos.proton.R;
 import org.movieos.proton.databinding.CorrectionActivityBinding;
+import org.movieos.proton.views.DialControl;
+import timber.log.Timber;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -50,8 +50,6 @@ import static org.movieos.proton.R.menu.correction;
 
 
 public class CorrectionActivity extends AppCompatActivity implements DialControl.OnDialChangeListener {
-    private transient static final String TAG = CorrectionActivity.class.getSimpleName();
-
     static final int REQUEST_STORAGE_WRITE = 4000;
 
     private CorrectionActivityBinding mBinding;
@@ -151,7 +149,7 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
             try {
                 buildSourceFromContentUri(selectedImageUri);
             } catch (IOException e) {
-                ELog.e(TAG, "java.io.IOException", e);
+                Timber.e(e, "java.io.IOException");
             }
         }
 
@@ -161,7 +159,7 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
             try {
                 buildSourceFromContentUri(send);
             } catch (IOException e) {
-                ELog.e(TAG, "java.io.IOException", e);
+                Timber.e(e, "java.io.IOException");
             }
         }
 
@@ -178,7 +176,7 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
                 float width = right - left;
                 float height = bottom - top;
                 float scale = Math.min(width / mSource.getWidth(), height / mSource.getHeight());
-                ELog.i(TAG, "preview scale is " + scale);
+                Timber.i("preview scale is %s", scale);
                 mPreview = Bitmap.createScaledBitmap(mSource, (int) (mSource.getWidth() * scale), (int) (mSource.getHeight() * scale), true);
                 mBinding.image.setImageBitmap(mPreview);
                 updateControls();
@@ -210,7 +208,7 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
     @Override
     protected void onResume() {
         super.onResume();
-        ELog.i(TAG, "Correction Manager is " + mCorrection);
+        Timber.i("Correction Manager is " + mCorrection);
         updateControls();
         updateImage();
     }
@@ -295,12 +293,13 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
     File getAlbumStorageDir(@NonNull String albumName) {
         File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), albumName);
         if (!file.mkdirs()) {
-            ELog.e(TAG, "Directory not created");
+            Timber.e("Directory not created");
         }
         return file;
     }
 
     void writeToFile(@NonNull File file) {
+        Timber.i("saving to %s", file);
         toast(R.string.saving);
         Bitmap output = Bitmap.createBitmap(mSource.getWidth(), mSource.getHeight(), mSource.getConfig());
         Canvas canvas = new Canvas(output);
@@ -322,7 +321,7 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
             }
 
         } catch (IOException e) {
-            ELog.e(TAG, "java.io.IOException", e);
+            Timber.e("java.io.IOException", e);
             toast(R.string.write_error);
         } finally {
             output.recycle();
