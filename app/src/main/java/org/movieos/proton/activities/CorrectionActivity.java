@@ -12,6 +12,7 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.media.ExifInterface;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
@@ -135,13 +136,6 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
             mGrid = !v.isActivated();
             updateControls();
         });
-
-        // start paths:
-        // (a) opened with URI (MainActivity document picker)
-        // (b) (legacy/gone) Opened with bitmap in data (MainActivity camera)
-        // (c) Opened with share intent
-
-        mSource = null;
 
         // MainActivity document picker / camera written data to file on disk
         Uri selectedImageUri = getIntent().getData();
@@ -292,45 +286,8 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
     @NonNull
     File getAlbumStorageDir(@NonNull String albumName) {
         File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), albumName);
-        if (!file.mkdirs()) {
-            Timber.e("Directory not created");
-        }
+        file.mkdirs();
         return file;
-    }
-
-    void writeToFile(@NonNull File file) {
-        Timber.i("saving to %s", file);
-        toast(R.string.saving);
-        Bitmap output = Bitmap.createBitmap(mSource.getWidth(), mSource.getHeight(), mSource.getConfig());
-        Canvas canvas = new Canvas(output);
-        Paint paint = new Paint();
-        paint.setAntiAlias(true);
-        canvas.drawBitmap(mSource, mCorrection.getMatrix(mSource), paint);
-        try {
-            FileOutputStream stream = new FileOutputStream(file);
-            output.compress(Bitmap.CompressFormat.JPEG, 80, stream);
-            stream.flush();
-            stream.close();
-
-            if (mOriginalLatitude != 0 && mOrigainlLongitude != 0) {
-                ExifInterface exif = new ExifInterface(file.getAbsolutePath());
-                exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE, gpsToString(mOriginalLatitude));
-                exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE_REF, mOriginalLatitude > 0 ? "N" : "S");
-                exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE, gpsToString(mOrigainlLongitude));
-                exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE_REF, mOrigainlLongitude > 0 ? "E" : "W");
-                exif.saveAttributes();
-            }
-
-            Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-            intent.setData(Uri.fromFile(file));
-            sendBroadcast(intent);
-
-        } catch (IOException e) {
-            Timber.e(e, "java.io.IOException");
-            toast(R.string.write_error);
-        } finally {
-            output.recycle();
-        }
     }
 
     private void save() {
@@ -342,15 +299,38 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
 
         File album = getAlbumStorageDir(getString(R.string.album_name));
         File file = new File(album, filename());
-        writeToFile(file);
-        toast(R.string.save_complete);
-        if (getIntent().getAction() != null && getIntent().getAction().equals(Intent.ACTION_EDIT)) {
-            Intent data = new Intent();
-            data.setData(Uri.parse("file://" + file.getAbsolutePath()));
-            setResult(Activity.RESULT_OK, data);
-            finish();
+        new SaveTask(file, false).execute(mSource);
+    }
+
+    void share() {
+        File saved = getTempFile();
+        new SaveTask(saved, true).execute(mSource);
+    }
+
+
+    void saveComplete(File file, final boolean share) {
+        if (share) {
+            // share
+            Intent intent = new Intent(Intent.ACTION_SEND);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
+            intent.setType("image/jpeg");
+            Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", file);
+            intent.putExtra(Intent.EXTRA_STREAM, uri);
+            startActivity(Intent.createChooser(intent, getString(R.string.share_title)));
+        } else {
+            // save
+            Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+            intent.setData(Uri.fromFile(file));
+            sendBroadcast(intent);
+            if (getIntent().getAction() != null && getIntent().getAction().equals(Intent.ACTION_EDIT)) {
+                Intent data = new Intent();
+                data.setData(Uri.parse("file://" + file.getAbsolutePath()));
+                setResult(Activity.RESULT_OK, data);
+                finish();
+            }
         }
     }
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
@@ -367,17 +347,6 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
     String filename() {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss", Locale.US);
         return format.format(new Date()) + ".jpg";
-    }
-
-    void share() {
-        File saved = getTempFile();
-        writeToFile(saved);
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
-        intent.setType("image/jpeg");
-        Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", saved);
-        intent.putExtra(Intent.EXTRA_STREAM, uri);
-        startActivity(Intent.createChooser(intent, getString(R.string.share_title)));
     }
 
     private void toast(final int message) {
@@ -469,5 +438,59 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
                 break;
         }
         mSource = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, false);
+    }
+
+    class SaveTask extends AsyncTask<Bitmap, Void, File> {
+        File mFile;
+        boolean mShare;
+
+        SaveTask(final File file, boolean share) {
+            mFile = file;
+            mShare = share;
+            toast(R.string.saving);
+        }
+
+        @Override
+        protected File doInBackground(final Bitmap... params) {
+            Bitmap source = params[0];
+            Bitmap output = Bitmap.createBitmap(source.getWidth(), source.getHeight(), source.getConfig());
+            Canvas canvas = new Canvas(output);
+            Paint paint = new Paint();
+            paint.setAntiAlias(true);
+            canvas.drawBitmap(source, mCorrection.getMatrix(source), paint);
+            try {
+                FileOutputStream stream = new FileOutputStream(mFile);
+                output.compress(Bitmap.CompressFormat.JPEG, 80, stream);
+                stream.flush();
+                stream.close();
+
+                if (mOriginalLatitude != 0 && mOrigainlLongitude != 0) {
+                    ExifInterface exif = new ExifInterface(mFile.getAbsolutePath());
+                    exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE, gpsToString(mOriginalLatitude));
+                    exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE_REF, mOriginalLatitude > 0 ? "N" : "S");
+                    exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE, gpsToString(mOrigainlLongitude));
+                    exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE_REF, mOrigainlLongitude > 0 ? "E" : "W");
+                    exif.saveAttributes();
+                }
+
+                return mFile;
+            } catch (IOException e) {
+                Timber.e(e, "java.io.IOException");
+                return null;
+            } finally {
+                output.recycle();
+            }
+        }
+
+        @Override
+        protected void onPostExecute(final File file) {
+            untoast();
+            if (file == null) {
+                toast(R.string.write_error);
+            } else {
+                toast(R.string.save_complete);
+                saveComplete(file, mShare);
+            }
+        }
     }
 }
