@@ -309,6 +309,7 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
         try {
             FileOutputStream stream = new FileOutputStream(file);
             output.compress(Bitmap.CompressFormat.JPEG, 80, stream);
+            stream.flush();
             stream.close();
 
             if (mOriginalLatitude != 0 && mOrigainlLongitude != 0) {
@@ -320,8 +321,12 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
                 exif.saveAttributes();
             }
 
+            Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+            intent.setData(Uri.fromFile(file));
+            sendBroadcast(intent);
+
         } catch (IOException e) {
-            Timber.e("java.io.IOException", e);
+            Timber.e(e, "java.io.IOException");
             toast(R.string.write_error);
         } finally {
             output.recycle();
@@ -360,7 +365,7 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
 
     @NonNull
     String filename() {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss.SSSZ", Locale.US);
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss", Locale.US);
         return format.format(new Date()) + ".jpg";
     }
 
