@@ -65,6 +65,7 @@
                 android:background="@drawable/mode_button_background"
                 android:src="@drawable/ic_crop_din_black_24dp"
                 android:tint="@color/color_button_foreground"
+                android:rotation="-90"
                 />
             <ImageButton
                 android:id="@+id/vertical_skew_button"

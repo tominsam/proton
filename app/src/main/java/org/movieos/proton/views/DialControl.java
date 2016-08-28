@@ -255,6 +255,10 @@ public class DialControl extends View {
         setValue(value, false);
     }
 
+    public double getValue() {
+        return pixelToValue(-mDragOffset);
+    }
+
     public void setValue(double value, boolean animate) {
         mOverScroller.forceFinished(true);
         double target = -valueToPixel(value);

@@ -114,7 +114,6 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
             updateControls();
         });
 
-        parallelogram.postRotate(-90, 24 * d, 24 * d);
         mBinding.horizontalSkewButton.setScaleType(ImageView.ScaleType.MATRIX);
         mBinding.horizontalSkewButton.setImageMatrix(parallelogram);
         mBinding.horizontalSkewButton.setOnClickListener(v -> {
@@ -123,7 +122,13 @@ public class CorrectionActivity extends AppCompatActivity implements DialControl
         });
 
         mBinding.resetButton.setOnClickListener(v -> {
-            mBinding.dial.setValue(0, true);
+            if (mBinding.dial.getValue() == 0) {
+                mCorrection = new CorrectionManager();
+                updateControls();
+                updateImage();
+            } else {
+                mBinding.dial.setValue(0, true);
+            }
         });
 
         mBinding.cropButton.setOnClickListener(v -> {
