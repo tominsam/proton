@@ -67,30 +67,37 @@ public class CorrectionManager implements Parcelable {
             return matrix;
         }
 
-        float hskew = (float) (mHorizontalSkew * source.getWidth() * 0.02f);
-        float vskew = (float) (mVerticalSkew * source.getWidth() * 0.02f);
-        float[] bounds = new float[] {
-                0, 0,
-                source.getWidth(), 0,
-                0, source.getHeight(),
-                source.getWidth(), source.getHeight()
+        int w = source.getWidth();
+        int h = source.getHeight();
+        double hcos = Math.cos(Math.toRadians(Math.abs(mHorizontalSkew)));
+        double hsin2 = Math.sin(Math.toRadians(Math.abs(mHorizontalSkew * 2)));
+
+        float hskew = (float) (mHorizontalSkew * w * 0.02f);
+        float vskew = (float) (mVerticalSkew * w * 0.02f);
+
+        float[] bounds = new float[]{
+            0, 0,
+            w, 0,
+            0, h,
+            w, h
         };
-        float[] dest = new float[] {
-                0, 0,
-                source.getWidth(), 0,
-                0, source.getHeight(),
-                source.getWidth(), source.getHeight()
+        float[] dest = new float[]{
+            0, 0,
+            w, 0,
+            0, h,
+            w, h
         };
+        double perspectiveCorrection = 0.3;
         if (hskew > 0) {
-            dest[4] -= hskew;
-            dest[5] += hskew;
-            dest[6] += hskew;
-            dest[7] += hskew;
+            dest[4] = (float) (hsin2 * w * perspectiveCorrection);
+            dest[5] = (float) (hcos * h);
+            dest[6] = (float) (w - hsin2 * w * perspectiveCorrection);
+            dest[7] = (float) (hcos * h);
         } else {
-            dest[0] += hskew;
-            dest[1] += hskew;
-            dest[2] -= hskew;
-            dest[3] += hskew;
+            dest[0] = (float) (hsin2 * w * perspectiveCorrection);
+            dest[1] = (float) (h - hcos * h);
+            dest[2] = (float) (w - hsin2 * w * perspectiveCorrection);
+            dest[3] = (float) (h - hcos * h);
         }
         if (vskew > 0) {
             dest[0] -= vskew;
@@ -105,39 +112,49 @@ public class CorrectionManager implements Parcelable {
         }
 
         matrix.setPolyToPoly(bounds, 0, dest, 0, 4);
-        matrix.preRotate((float) mRotation, source.getWidth() / 2, source.getHeight() / 2);
+        matrix.preRotate((float) mRotation, w / 2, h / 2);
 
         // if mCrop, we want the largest image of the same aspect as the original that
         // fits entirely inside our new poly. If not mCrop, we'll return the smallest
         // rectangle of the same aspect that entirely encloses the target poly.
-        RectF start = new RectF(0, 0, source.getWidth(), source.getHeight());
+        RectF start = new RectF(0, 0, w, h);
         float[] targetPoly = new float[8];
         matrix.mapPoints(targetPoly, bounds);
         // bounding rectangle
-        RectF boundsRect = new RectF(
+        RectF boundsRect;
+        float scale;
+        if (mCrop) {
+            // in theory this should be the largest rectangle that fits. This is hard given that
+            // rotation is a thing. So we do the simplest thing that mostly works.
+            boundsRect = new RectF(
+                Math.max(targetPoly[0], targetPoly[4]),
+                Math.max(targetPoly[1], targetPoly[3]),
+                Math.min(targetPoly[2], targetPoly[6]),
+                Math.min(targetPoly[5], targetPoly[7])
+            );
+            scale = Math.min(boundsRect.width() / start.width(), boundsRect.height() / start.height());
+        } else {
+            boundsRect = new RectF(
                 Math.min(Math.min(targetPoly[0], targetPoly[2]), Math.min(targetPoly[4], targetPoly[6])),
                 Math.min(Math.min(targetPoly[1], targetPoly[3]), Math.min(targetPoly[5], targetPoly[7])),
                 Math.max(Math.max(targetPoly[0], targetPoly[2]), Math.max(targetPoly[4], targetPoly[6])),
                 Math.max(Math.max(targetPoly[1], targetPoly[3]), Math.max(targetPoly[5], targetPoly[7]))
-        );
-
-        if (mCrop) {
-            // this is wrong. We're just scaling to hide corners from rotation
-            // We should find largest fitting rectangle inpoly but ow my brain.
-            double cos = Math.abs(Math.sin(Math.toRadians(mRotation) * 2));
-            double scale = cos * (Math.sqrt(2) - 1) + 1;
-            matrix.postScale((float) scale, (float) scale, source.getWidth() / 2, source.getHeight() / 2);
-        } else {
-            // build the aspect-correct rectangle that has the bounding rectangle at its center
-            float scale = Math.max(boundsRect.width() / start.width(), boundsRect.height() / start.height());
-            RectF end = new RectF(0, 0, scale * start.width(), scale * start.height());
-            end.offsetTo(boundsRect.left, boundsRect.top);
-            end.offset((boundsRect.width() - end.width()) / 2, (boundsRect.height() - end.height()) / 2);
-            Matrix shrink = new Matrix();
-            shrink.setRectToRect(start, end, Matrix.ScaleToFit.FILL);
-            shrink.invert(shrink);
-            matrix.postConcat(shrink);
+            );
+            scale = Math.max(boundsRect.width() / start.width(), boundsRect.height() / start.height());
         }
+
+        Matrix shrink = new Matrix();
+        //shrink.setPolyToPoly()
+        matrix.postConcat(shrink);
+
+//        // build the aspect-correct rectangle that has the bounding rectangle at its center
+//        RectF end = new RectF(0, 0, scale * start.width(), scale * start.height());
+//        end.offsetTo(boundsRect.left, boundsRect.top);
+//        end.offset((boundsRect.width() - end.width()) / 2, (boundsRect.height() - end.height()) / 2);
+//        Matrix shrink = new Matrix();
+//        shrink.setRectToRect(start, end, Matrix.ScaleToFit.FILL);
+//        shrink.invert(shrink);
+//        matrix.postConcat(shrink);
 
         return matrix;
     }
